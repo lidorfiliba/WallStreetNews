@@ -374,14 +374,36 @@ def check_opening_bell(state):
         return
 
     lines = ["🔔 <b>פתיחת מסחר — וול סטריט 🇺🇸 (16:30 🇮🇱)</b>\n"]
-    for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL"]:
+
+    all_tickers = {}
+    for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL"]:
         price, change, volume, avg_vol = get_ticker(ticker)
+        all_tickers[ticker] = (price, change)
         arrow = "🟢" if change >= 0 else "🔴"
         star  = "⭐ " if ticker == "TSLA" else ""
         lines.append(f"{arrow} {star}{ticker}: ${price:.2f} ({change:+.2f}%)")
 
+    # מוביל עליות וירידות
+    best  = max(all_tickers.items(), key=lambda x: x[1][1])
+    worst = min(all_tickers.items(), key=lambda x: x[1][1])
+    lines.append(f"\n🏆 מוביל יום: {best[0]} ({best[1][1]:+.2f}%)")
+    lines.append(f"💥 מפסיד יום: {worst[0]} ({worst[1][1]:+.2f}%)")
+
     tg_send("\n".join(lines))
     mark(state, key)
+
+def get_commodity(symbol):
+    """שליפת מחיר סחורה/מט"ח מ-Yahoo Finance"""
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=2d"
+        r   = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
+        meta   = r.json()["chart"]["result"][0]["meta"]
+        price  = meta.get("regularMarketPrice", 0)
+        prev   = meta.get("chartPreviousClose", 0)
+        change = ((price - prev) / prev * 100) if prev else 0
+        return price, change
+    except:
+        return 0, 0
 
 def check_daily_summary(state):
     """סיכום יומי 23:00 ישראל = 20:00 UTC"""
@@ -393,8 +415,12 @@ def check_daily_summary(state):
     lines = ["📈 <b>סיכום יומי — סגירת שוק (23:00 🇮🇱)</b>\n"]
     winners, losers = [], []
 
-    for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META"]:
+    # מניות
+    lines.append("🏦 <b>מניות</b>")
+    all_stocks = {}
+    for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL"]:
         price, change, _, _ = get_ticker(ticker)
+        all_stocks[ticker] = (price, change)
         arrow = "🟢" if change >= 0 else "🔴"
         star  = "⭐ " if ticker == "TSLA" else ""
         lines.append(f"{arrow} {star}{ticker}: ${price:.2f} ({change:+.2f}%)")
@@ -402,6 +428,39 @@ def check_daily_summary(state):
             winners.append(f"{ticker} +{change:.1f}%")
         else:
             losers.append(f"{ticker} {change:.1f}%")
+
+    # מוביל עליות וירידות היום
+    if all_stocks:
+        best  = max(all_stocks.items(), key=lambda x: x[1][1])
+        worst = min(all_stocks.items(), key=lambda x: x[1][1])
+        lines.append(f"\n🏆 <b>מוביל היום:</b> {best[0]} ({best[1][1]:+.2f}%)")
+        lines.append(f"💥 <b>מפסיד היום:</b> {worst[0]} ({worst[1][1]:+.2f}%)")
+
+    # סחורות
+    lines.append("\n🛢️ <b>סחורות ומתכות</b>")
+    commodities = [
+        ("GC=F",  "🥇 זהב",  "$", 0),
+        ("SI=F",  "🥈 כסף",  "$", 2),
+        ("CL=F",  "🛢️ נפט",  "$", 2),
+    ]
+    for symbol, label, prefix, decimals in commodities:
+        price, change = get_commodity(symbol)
+        if price:
+            arrow = "🟢" if change >= 0 else "🔴"
+            lines.append(f"{arrow} {label}: {prefix}{price:.{decimals}f} ({change:+.2f}%)")
+
+    # מט"ח
+    lines.append("\n💱 <b>שערי חליפין</b>")
+    forex = [
+        ("USDILS=X", "💵 דולר-שקל"),
+        ("EURILS=X", "💶 יורו-שקל"),
+        ("EURUSD=X", "💶 יורו-דולר"),
+    ]
+    for symbol, label in forex:
+        price, change = get_commodity(symbol)
+        if price:
+            arrow = "🟢" if change >= 0 else "🔴"
+            lines.append(f"{arrow} {label}: ₪{price:.3f} ({change:+.2f}%)")
 
     if winners:
         lines.append(f"\n🏆 <b>מובילי עליות:</b> {', '.join(winners[:3])}")
@@ -419,6 +478,9 @@ def check_weekly_summary(state):
         return
 
     lines = ["📊 <b>סיכום שבועי 🗓️</b>\n"]
+
+    # מניות
+    lines.append("🏦 <b>מניות</b>")
     for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL"]:
         try:
             url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1wk&range=1wk"
@@ -432,6 +494,22 @@ def check_weekly_summary(state):
             lines.append(f"{arrow} {star}{ticker}: ${price:.2f} ({change:+.2f}% השבוע)")
         except:
             pass
+
+    # סחורות
+    lines.append("\n🛢️ <b>סחורות ומתכות</b>")
+    for symbol, label, prefix, decimals in [("GC=F","🥇 זהב","$",0),("SI=F","🥈 כסף","$",2),("CL=F","🛢️ נפט","$",2)]:
+        price, change = get_commodity(symbol)
+        if price:
+            arrow = "🟢" if change >= 0 else "🔴"
+            lines.append(f"{arrow} {label}: {prefix}{price:.{decimals}f} ({change:+.2f}% השבוע)")
+
+    # מט"ח
+    lines.append("\n💱 <b>שערי חליפין</b>")
+    for symbol, label in [("USDILS=X","💵 דולר-שקל"),("EURILS=X","💶 יורו-שקל")]:
+        price, change = get_commodity(symbol)
+        if price:
+            arrow = "🟢" if change >= 0 else "🔴"
+            lines.append(f"{arrow} {label}: ₪{price:.3f} ({change:+.2f}% השבוע)")
 
     tg_send("\n".join(lines))
     mark(state, key)
