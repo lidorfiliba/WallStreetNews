@@ -413,8 +413,7 @@ def check_daily_summary(state):
         return
 
     today = now.strftime("%d.%m.%Y")
-    lines = [f"📉📈 <b>יום המסחר הסתיים — {today}</b>
-"]
+    lines = [f"📉📈 <b>יום המסחר הסתיים — {today}</b>\n"]
     winners, losers = [], []
 
     # מדדים
@@ -426,8 +425,7 @@ def check_daily_summary(state):
         lines.append(f"{arrow} {names[ticker]}: ${price:.2f} ({change:+.2f}%)")
 
     # מניות
-    lines.append("
-🏦 <b>מניות</b>")
+    lines.append("\n🏦 <b>מניות</b>")
     all_stocks = {}
     for ticker in ["TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL"]:
         price, change, _, _ = get_ticker(ticker)
@@ -440,35 +438,46 @@ def check_daily_summary(state):
         else:
             losers.append(f"{ticker} {change:.1f}%")
 
+    # מוביל עליות וירידות היום
     if all_stocks:
         best  = max(all_stocks.items(), key=lambda x: x[1][1])
         worst = min(all_stocks.items(), key=lambda x: x[1][1])
-        lines.append(f"
-🏆 <b>מוביל היום:</b> {best[0]} ({best[1][1]:+.2f}%)")
+        lines.append(f"\n🏆 <b>מוביל היום:</b> {best[0]} ({best[1][1]:+.2f}%)")
         lines.append(f"💥 <b>מפסיד היום:</b> {worst[0]} ({worst[1][1]:+.2f}%)")
 
     # סחורות
-    lines.append("
-🛢️ <b>סחורות ומתכות</b>")
-    for symbol, label, decimals in [("GC=F","🥇 זהב",0),("SI=F","🥈 כסף",2),("CL=F","🛢️ נפט",2)]:
+    lines.append("\n🛢️ <b>סחורות ומתכות</b>")
+    commodities = [
+        ("GLD",  "🥇 זהב",  "$", 2),
+        ("SLV",  "🥈 כסף",  "$", 2),
+        ("USO",  "🛢️ נפט",  "$", 2),
+    ]
+    for symbol, label, prefix, decimals in commodities:
         price, change = get_commodity(symbol)
         if price:
             arrow = "🟢" if change >= 0 else "🔴"
-            lines.append(f"{arrow} {label}: ${price:.{decimals}f} ({change:+.2f}%)")
+            lines.append(f"{arrow} {label}: {prefix}{price:.{decimals}f} ({change:+.2f}%)")
 
-    # מטח
-    lines.append("
-💱 <b>שערי חליפין</b>")
-    for symbol, label in [("USDILS=X","💵 דולר-שקל"),("EURILS=X","💶 יורו-שקל"),("EURUSD=X","💶 יורו-דולר")]:
+    # מט"ח
+    lines.append("\n💱 <b>שערי חליפין</b>")
+    forex = [
+        ("USDILS=X", "💵 דולר-שקל"),
+        ("EURILS=X", "💶 יורו-שקל"),
+        ("EURUSD=X", "💶 יורו-דולר"),
+    ]
+    for symbol, label in forex:
         price, change = get_commodity(symbol)
         if price:
             arrow = "🟢" if change >= 0 else "🔴"
-            lines.append(f"{arrow} {label}: {price:.3f} ({change:+.2f}%)")
+            lines.append(f"{arrow} {label}: ₪{price:.3f} ({change:+.2f}%)")
 
-    tg_send("
-".join(lines))
+    if winners:
+        lines.append(f"\n🏆 <b>מובילי עליות:</b> {', '.join(winners[:3])}")
+    if losers:
+        lines.append(f"📉 <b>מובילי ירידות:</b> {', '.join(losers[:3])}")
+
+    tg_send("\n".join(lines))
     mark(state, key)
-
 
 def check_weekly_summary(state):
     """סיכום שבועי כל יום שישי ב-20:00 UTC"""
