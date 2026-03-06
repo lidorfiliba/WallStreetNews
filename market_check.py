@@ -3,7 +3,7 @@ MarketAlert v2 — GitHub Actions
 בודק כל 5 דקות — קבוצה אחת לכל הפעולות
 """
 import requests, json, re, os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -28,8 +28,11 @@ MARKET_MOVE_KEYWORDS = [
 ]
 
 EARNINGS_KEYWORDS = [
-    "earnings", "revenue", "profit", "eps", "beat", "miss",
-    "quarterly", "guidance", "outlook", "results",
+    "earnings beat", "earnings miss", "earnings per share",
+    "quarterly results", "quarterly earnings", "revenue beat",
+    "revenue miss", "eps beat", "eps miss", "raised guidance",
+    "lowered guidance", "beats estimates", "misses estimates",
+    "reports earnings", "posted earnings",
 ]
 
 TESLA_KEYWORDS = [
@@ -133,7 +136,7 @@ def parse_date(s):
 
 def check_sharp_moves(state):
     """תנועות חדות מעל 3% בזמן מסחר"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     # רק בשעות מסחר 13:30-20:00 UTC
     if not (now.weekday() < 5 and (now.hour > 13 or (now.hour == 13 and now.minute >= 30)) and now.hour < 20):
         return
@@ -216,10 +219,13 @@ def check_insider(state):
             is_tesla = "tesla" in entity.lower()
             emoji    = "🔴⭐" if is_tesla else "🐋"
             label    = " [TSLA]" if is_tesla else ""
+            acc_fmt = acc.replace("-", "")
+            link    = f"https://www.sec.gov/Archives/edgar/data/{acc_fmt[:10]}/{acc_fmt}/{acc}-index.htm"
             tg_send(
                 f"{emoji} <b>Insider Buying{label}</b>\n"
                 f"🏢 {entity}\n"
-                f"📅 {filed}"
+                f"📅 {filed}\n"
+                f"🔗 https://efts.sec.gov/LATEST/search-index?q=%22{acc}%22&forms=4"
             )
             mark(state, key)
     except Exception as e:
@@ -227,7 +233,7 @@ def check_insider(state):
 
 def check_news(state):
     """חדשות שוק, מאקרו, טסלה ודוחות"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     for feed_url in RSS_FEEDS:
         for item in parse_rss(feed_url)[:8]:
@@ -285,7 +291,7 @@ def check_stocktwits_tsla(state):
             # בדוק שההודעה מהשעה האחרונה
             try:
                 dt = datetime.strptime(created, "%Y-%m-%dT%H:%M:%SZ")
-                if (datetime.utcnow() - dt).total_seconds() > 3600:
+                if (datetime.now(timezone.utc).replace(tzinfo=None) - dt).total_seconds() > 3600:
                     continue
             except:
                 continue
@@ -301,7 +307,7 @@ def check_stocktwits_tsla(state):
 
 def check_opening_bell(state):
     """פתיחת מסחר 16:30 ישראל = 13:30 UTC"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"open:{now.strftime('%Y-%m-%d')}"
     if not (now.hour == 13 and 30 <= now.minute <= 34):
         return
@@ -320,7 +326,7 @@ def check_opening_bell(state):
 
 def check_daily_summary(state):
     """סיכום יומי 23:00 ישראל = 20:00 UTC"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"summary:{now.strftime('%Y-%m-%d')}"
     if now.hour != 20 or now.weekday() >= 5 or sent(state, key):
         return
@@ -348,7 +354,7 @@ def check_daily_summary(state):
 
 def check_weekly_summary(state):
     """סיכום שבועי כל יום שישי ב-20:00 UTC"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"weekly:{now.strftime('%Y-W%W')}"
     if now.weekday() != 4 or now.hour != 20 or sent(state, key):
         return
