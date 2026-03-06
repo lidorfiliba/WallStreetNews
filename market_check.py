@@ -48,8 +48,29 @@ RSS_FEEDS = [
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
-STOCKTWITS_TSLA = "https://api.stocktwits.com/api/2/streams/symbol/TSLA.json"
-FEAR_GREED = "https://fear-and-greed-index.p.rapidapi.com/v1/fgi"
+
+# Nitter — מראה טוויטר חינמי עם RSS (מנסה כמה שרתים למקרה שאחד נפל)
+NITTER_SERVERS = [
+    "https://nitter.privacydev.net",
+    "https://nitter.poast.org",
+    "https://nitter.1d4.us",
+]
+
+TWITTER_ACCOUNTS = [
+    ("elonmusk",     "🔴⭐ אילון מאסק"),
+    ("teslarati",    "⭐ Teslarati"),
+    ("WholeMarsBlog","⭐ Tesla News"),
+    ("DeItaone",     "📊 Delta One (חדשות שוק)"),
+    ("unusual_whales","🐋 Unusual Whales"),
+    ("zerohedge",    "📉 ZeroHedge"),
+]
+
+TWITTER_FILTER_KEYWORDS = [
+    "tesla", "tsla", "stock", "market", "fed", "rate", "inflation",
+    "earnings", "spy", "nasdaq", "crash", "rally", "bullish", "bearish",
+    "sec", "ipo", "merger", "acquisition", "billion", "million",
+    "elon", "cybertruck", "model", "gigafactory",
+]
 
 # ── helpers ──────────────────────────────────────────────
 
@@ -268,42 +289,69 @@ def check_news(state):
             tg_send(f"{emoji} <b>{tag}</b>\n{title}\n🔗 {link}")
             mark(state, key)
 
-def check_stocktwits_tsla(state):
-    """טרנדים חמים על טסלה מ-StockTwits"""
-    try:
-        r    = requests.get(STOCKTWITS_TSLA, timeout=8)
-        msgs = r.json().get("messages", [])
-        for msg in msgs[:5]:
-            mid  = str(msg.get("id", ""))
-            key  = f"st:{mid}"
-            if sent(state, key):
-                continue
 
-            body      = msg.get("body", "")
-            sentiment = msg.get("entities", {}).get("sentiment", {})
-            sen_label = sentiment.get("basic", "") if sentiment else ""
-            created   = msg.get("created_at", "")
+def check_twitter_nitter(state):
+    """ציוצים חמים מטוויטר דרך Nitter RSS"""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
 
-            # רק הודעות עם sentiment ברור
-            if sen_label not in ("Bullish", "Bearish"):
-                continue
+    for account, label in TWITTER_ACCOUNTS:
+        feed_url = None
 
-            # בדוק שההודעה מהשעה האחרונה
+        # נסה כל שרת nitter עד שאחד עובד
+        for server in NITTER_SERVERS:
             try:
-                dt = datetime.strptime(created, "%Y-%m-%dT%H:%M:%SZ")
-                if (datetime.now(timezone.utc).replace(tzinfo=None) - dt).total_seconds() > 3600:
-                    continue
+                url = f"{server}/{account}/rss"
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=6) as r:
+                    xml = r.read().decode("utf-8", errors="ignore")
+                if "<item>" in xml:
+                    feed_url = url
+                    break
             except:
                 continue
 
-            emoji = "🟢" if sen_label == "Bullish" else "🔴"
-            tg_send(
-                f"{emoji}⭐ <b>StockTwits — TSLA ({sen_label})</b>\n"
-                f"{body[:200]}"
-            )
-            mark(state, key)
-    except Exception as e:
-        print(f"StockTwits error: {e}")
+        if not feed_url:
+            continue
+
+        try:
+            root = ET.fromstring(xml)
+            for item in root.iter("item"):
+                title = item.findtext("title", "").strip()
+                link  = item.findtext("link", "").strip()
+                pub   = item.findtext("pubDate", "").strip()
+
+                if not title:
+                    continue
+
+                key = f"tw:{account}:{title[:50]}"
+                if sent(state, key):
+                    continue
+
+                # רק ציוצים מהשעה האחרונה
+                pub_dt = parse_date(pub)
+                if pub_dt and (now - pub_dt).total_seconds() > 3600:
+                    continue
+
+                # סנן לפי מילות מפתח רלוונטיות
+                tl = title.lower()
+                if not any(kw in tl for kw in TWITTER_FILTER_KEYWORDS):
+                    # אם זה אילון מאסק — שלח הכל (כל ציוץ שלו רלוונטי)
+                    if account != "elonmusk":
+                        continue
+
+                # המר קישור nitter לטוויטר אמיתי
+                real_link = link.replace(NITTER_SERVERS[0], "https://twitter.com")
+                for s in NITTER_SERVERS:
+                    real_link = real_link.replace(s, "https://twitter.com")
+
+                tg_send(
+                    f"🐦 <b>{label}</b>\n"
+                    f"{title[:280]}\n"
+                    f"🔗 {real_link}"
+                )
+                mark(state, key)
+        except Exception as e:
+            print(f"Nitter parse error ({account}): {e}")
 
 def check_opening_bell(state):
     """פתיחת מסחר 16:30 ישראל = 13:30 UTC"""
@@ -386,7 +434,7 @@ def main():
     check_tesla_filings(state)
     check_insider(state)
     check_news(state)
-    check_stocktwits_tsla(state)
+    check_twitter_nitter(state)
     check_opening_bell(state)
     check_daily_summary(state)
     check_weekly_summary(state)
