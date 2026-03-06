@@ -162,27 +162,32 @@ def parse_date(s):
 # ── checks ───────────────────────────────────────────────
 
 def check_sharp_moves(state):
-    """תנועות חדות מעל 3% בזמן מסחר"""
+    """תנועות חדות — שולח רק כשיש שינוי חריג חדש"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    # רק בשעות מסחר 13:30-20:00 UTC
     if not (now.weekday() < 5 and (now.hour > 13 or (now.hour == 13 and now.minute >= 30)) and now.hour < 20):
         return
 
     for ticker in WATCHLIST:
         price, change, volume, avg_vol = get_ticker(ticker)
         if abs(change) < MOVE_THRESHOLD:
+            # אם המניה חזרה לנורמלי — נקה את ה-state שלה
+            state.setdefault("last_move", {}).pop(ticker, None)
             continue
 
-        key = f"move:{ticker}:{now.strftime('%Y-%m-%d')}:{int(abs(change))}"
-        if sent(state, key):
+        # שלח רק אם השינוי גדל ב-1% לפחות מהפעם האחרונה
+        last_change = state.setdefault("last_move", {}).get(ticker, 0)
+        if abs(change) < abs(last_change) + 1.0 and last_change != 0:
             continue
+
+        state["last_move"][ticker] = change
 
         arrow    = "🚀" if change > 0 else "💥"
-        is_tesla = ticker == "TSLA"
-        star     = " ⭐" if is_tesla else ""
-        vol_note = ""
-        if avg_vol and volume > avg_vol * 1.5:
-            vol_note = " | 🔥 נפח חריג"
+        star     = " ⭐" if ticker == "TSLA" else ""
+        vol_note = " | 🔥 נפח חריג" if avg_vol and volume > avg_vol * 1.5 else ""
+        key      = f"move:{ticker}:{now.strftime('%Y-%m-%d')}:{int(abs(change))}"
+
+        if sent(state, key):
+            continue
 
         tg_send(
             f"{arrow} <b>תנועה חדה{star} — {ticker}</b>\n"
