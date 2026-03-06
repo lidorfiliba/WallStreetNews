@@ -69,6 +69,7 @@ TWITTER_ACCOUNTS = [
     ("zerohedge",       "📉 ZeroHedge"),
     ("AppEconomy",      "💰 App Economy (דוחות חברות)"),
     ("FinancialJuice",  "⚡ FinancialJuice (חדשות מהירות)"),
+    ("CheddarFlow",     "🎯 CheddarFlow (אופציות חריגות)"),
 ]
 
 TWITTER_FILTER_KEYWORDS = [
@@ -76,6 +77,7 @@ TWITTER_FILTER_KEYWORDS = [
     "earnings", "spy", "nasdaq", "crash", "rally", "bullish", "bearish",
     "sec", "ipo", "merger", "acquisition", "billion", "million",
     "elon", "cybertruck", "model", "gigafactory",
+    "unusual", "call", "put", "options", "sweep", "flow", "unusual activity",
 ]
 
 # ── helpers ──────────────────────────────────────────────
