@@ -412,13 +412,22 @@ def check_daily_summary(state):
     if now.hour != 20 or now.weekday() >= 5 or sent(state, key):
         return
 
-    lines = ["📈 <b>סיכום יומי — סגירת שוק (23:00 🇮🇱)</b>\n"]
+    today = now.strftime("%d.%m.%Y")
+    lines = [f"📉📈 <b>יום המסחר הסתיים — {today}</b>\n"]
     winners, losers = [], []
 
+    # מדדים
+    lines.append("📊 <b>מדדים</b>")
+    for ticker in ["SPY", "QQQ", "DIA"]:
+        price, change, _, _ = get_ticker(ticker)
+        arrow = "🟢" if change >= 0 else "🔴"
+        names = {"SPY": "סאנדפי 500", "QQQ": "נאסדק 100", "DIA": "דאו ג'ונס"}
+        lines.append(f"{arrow} {names[ticker]}: ${price:.2f} ({change:+.2f}%)")
+
     # מניות
-    lines.append("🏦 <b>מניות</b>")
+    lines.append("\n🏦 <b>מניות</b>")
     all_stocks = {}
-    for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL"]:
+    for ticker in ["TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL"]:
         price, change, _, _ = get_ticker(ticker)
         all_stocks[ticker] = (price, change)
         arrow = "🟢" if change >= 0 else "🔴"
@@ -439,9 +448,9 @@ def check_daily_summary(state):
     # סחורות
     lines.append("\n🛢️ <b>סחורות ומתכות</b>")
     commodities = [
-        ("GC=F",  "🥇 זהב",  "$", 0),
-        ("SI=F",  "🥈 כסף",  "$", 2),
-        ("CL=F",  "🛢️ נפט",  "$", 2),
+        ("GLD",  "🥇 זהב",  "$", 2),
+        ("SLV",  "🥈 כסף",  "$", 2),
+        ("USO",  "🛢️ נפט",  "$", 2),
     ]
     for symbol, label, prefix, decimals in commodities:
         price, change = get_commodity(symbol)
@@ -497,7 +506,7 @@ def check_weekly_summary(state):
 
     # סחורות
     lines.append("\n🛢️ <b>סחורות ומתכות</b>")
-    for symbol, label, prefix, decimals in [("GC=F","🥇 זהב","$",0),("SI=F","🥈 כסף","$",2),("CL=F","🛢️ נפט","$",2)]:
+    for symbol, label, prefix, decimals in [("GLD","🥇 זהב","$",2),("SLV","🥈 כסף","$",2),("USO","🛢️ נפט","$",2)]:
         price, change = get_commodity(symbol)
         if price:
             arrow = "🟢" if change >= 0 else "🔴"
