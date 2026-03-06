@@ -61,12 +61,14 @@ NITTER_SERVERS = [
 ]
 
 TWITTER_ACCOUNTS = [
-    ("elonmusk",     "🔴⭐ אילון מאסק"),
-    ("teslarati",    "⭐ Teslarati"),
-    ("WholeMarsBlog","⭐ Tesla News"),
-    ("DeItaone",     "📊 Delta One (חדשות שוק)"),
-    ("unusual_whales","🐋 Unusual Whales"),
-    ("zerohedge",    "📉 ZeroHedge"),
+    ("elonmusk",        "🔴⭐ אילון מאסק"),
+    ("teslarati",       "⭐ Teslarati"),
+    ("WholeMarsBlog",   "⭐ Tesla News"),
+    ("DeItaone",        "📊 Delta One (חדשות שוק)"),
+    ("unusual_whales",  "🐋 Unusual Whales"),
+    ("zerohedge",       "📉 ZeroHedge"),
+    ("AppEconomy",      "💰 App Economy (דוחות חברות)"),
+    ("FinancialJuice",  "⚡ FinancialJuice (חדשות מהירות)"),
 ]
 
 TWITTER_FILTER_KEYWORDS = [
