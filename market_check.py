@@ -15,10 +15,14 @@ WATCHLIST = ["TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "SPY", "QQ
 MOVE_THRESHOLD = 3.0  # % שינוי חד
 
 MACRO_KEYWORDS = [
-    "CPI", "PCE", "NFP", "nonfarm", "inflation", "Federal Reserve",
-    "FOMC", "interest rate", "GDP", "unemployment", "payrolls",
-    "consumer price", "personal consumption", "jobs report", "rate hike",
-    "rate cut", "dovish", "hawkish", "recession",
+    "CPI report", "CPI data", "PCE report", "PCE data",
+    "nonfarm payrolls", "NFP report", "jobs report",
+    "Federal Reserve raises", "Federal Reserve cuts", "Fed raises", "Fed cuts",
+    "FOMC decision", "FOMC meeting", "interest rate decision",
+    "GDP growth", "GDP report", "unemployment rate",
+    "inflation data", "inflation report", "inflation rises", "inflation falls",
+    "rate hike", "rate cut", "dovish", "hawkish",
+    "consumer price index", "personal consumption expenditures",
 ]
 
 MARKET_MOVE_KEYWORDS = [
