@@ -450,9 +450,9 @@ def check_daily_summary(state):
     # סחורות
     lines.append("\n🛢️ <b>סחורות ומתכות</b>")
     commodities = [
-        ("GLD",  "🥇 זהב",  "$", 2),
-        ("SLV",  "🥈 כסף",  "$", 2),
-        ("USO",  "🛢️ נפט",  "$", 2),
+        ("GC=F", "🥇 זהב",  "$", 0),
+        ("SI=F", "🥈 כסף",  "$", 2),
+        ("CL=F", "🛢️ נפט",  "$", 2),
     ]
     for symbol, label, prefix, decimals in commodities:
         price, change = get_commodity(symbol)
@@ -508,7 +508,7 @@ def check_weekly_summary(state):
 
     # סחורות
     lines.append("\n🛢️ <b>סחורות ומתכות</b>")
-    for symbol, label, prefix, decimals in [("GLD","🥇 זהב","$",2),("SLV","🥈 כסף","$",2),("USO","🛢️ נפט","$",2)]:
+    for symbol, label, prefix, decimals in [("GC=F","🥇 זהב","$",0),("SI=F","🥈 כסף","$",2),("CL=F","🛢️ נפט","$",2)]:
         price, change = get_commodity(symbol)
         if price:
             arrow = "🟢" if change >= 0 else "🔴"
