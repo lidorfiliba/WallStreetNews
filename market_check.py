@@ -45,13 +45,17 @@ RSS_FEEDS = [
     # CNBC — תקציר אמיתי בתוך ה-RSS, קישורים אמיתיים
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
-    # Yahoo Finance — כיסוי רחב, בלי סיכום אם חסום
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US",
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA,AAPL&region=US&lang=en-US",
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839135",  # CNBC Markets
     # Reuters — מקור אמין עם טקסט מלא
     "https://feeds.reuters.com/reuters/businessNews",
     "https://feeds.reuters.com/reuters/technologyNews",
-    # Google News — כיסוי רחב עם קישורים למקורות אמיתיים
+    # MarketWatch — חדשות שוק אמיתיות
+    "https://feeds.marketwatch.com/marketwatch/topstories/",
+    "https://feeds.marketwatch.com/marketwatch/marketpulse/",
+    # Yahoo Finance — כיסוי רחב, בלי סיכום אם חסום
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US",
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA,AAPL&region=US&lang=en-US",
+    # Google News — כיסוי רחב
     "https://news.google.com/rss/search?q=tesla+TSLA+elon+musk&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en",
@@ -195,7 +199,7 @@ def parse_date(s):
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
-BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com"]
+BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "benzinga.com", "uk.finance.yahoo.com"]
 
 def summarize_article(title, link, rss_desc=""):
     """מסכם כתבה — קודם מנסה לשלוף, אחרת משתמש ב-description מה-RSS"""
