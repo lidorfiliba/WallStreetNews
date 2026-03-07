@@ -144,6 +144,17 @@ def get_ticker(ticker):
     except:
         return 0, 0, 0, 1
 
+def extract_real_link(link):
+    """מוציא קישור אמיתי מ-Google News redirect"""
+    if "news.google.com" not in link:
+        return link
+    try:
+        req = urllib.request.Request(link, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            return r.url  # URL אחרי redirect
+    except:
+        return link
+
 def parse_rss(url):
     items = []
     xml = fetch_url(url)
@@ -156,6 +167,9 @@ def parse_rss(url):
             link  = item.findtext("link", "").strip()
             pub   = item.findtext("pubDate", "").strip()
             if title:
+                # חלץ קישור אמיתי מ-Google News
+                if "news.google.com" in link:
+                    link = extract_real_link(link)
                 items.append({"title": title, "link": link, "pub": pub})
     except:
         pass
