@@ -42,13 +42,12 @@ TESLA_KEYWORDS = [
 ]
 
 RSS_FEEDS = [
-    # Google News — חדשות בזמן אמת
-    "https://news.google.com/rss/search?q=stock+market+wall+street&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
-    "https://news.google.com/rss/search?q=tesla+TSLA+stock&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
-    "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
-    "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
-    "https://news.google.com/rss/search?q=unusual+options+insider+buying+SEC&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
-    "https://news.google.com/rss/search?q=nvidia+nvda+apple+aapl+microsoft+msft&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
+    "https://news.google.com/rss/search?q=stock+market+wall+street&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=tesla+TSLA+elon+musk&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=unusual+options+insider+buying+SEC&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=nvidia+nvda+apple+aapl+microsoft+msft&hl=en&gl=US&ceid=US:en",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
