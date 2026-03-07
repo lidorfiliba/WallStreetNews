@@ -15,33 +15,30 @@ WATCHLIST = ["TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "SPY", "QQ
 MOVE_THRESHOLD = 3.0  # % שינוי חד
 
 MACRO_KEYWORDS = [
-    "CPI report", "CPI data", "PCE report", "PCE data",
-    "nonfarm payrolls", "NFP report", "jobs report",
-    "Federal Reserve raises", "Federal Reserve cuts", "Fed raises", "Fed cuts",
-    "FOMC decision", "FOMC meeting", "interest rate decision",
-    "GDP growth", "GDP report", "unemployment rate",
-    "inflation data", "inflation report", "inflation rises", "inflation falls",
-    "rate hike", "rate cut", "dovish", "hawkish",
-    "consumer price index", "personal consumption expenditures",
+    "cpi", "pce", "nonfarm", "nfp", "jobs report", "payrolls",
+    "federal reserve", "fed reserve", "fed governor", "fed chair",
+    "fomc", "interest rate", "rate hike", "rate cut", "rate decision",
+    "gdp", "unemployment", "inflation", "dovish", "hawkish",
+    "powell", "treasury", "yield curve", "recession",
 ]
 
 MARKET_MOVE_KEYWORDS = [
-    "crash", "surge", "plunge", "rally", "circuit breaker", "halted",
-    "bear market", "bull market", "all-time high", "52-week low",
-    "market selloff", "black monday", "meltdown",
+    "crash", "surge", "plunge", "rally", "soar", "tumble", "sink",
+    "circuit breaker", "halted", "bear market", "bull market",
+    "all-time high", "52-week", "selloff", "sell-off", "meltdown",
+    "market risk", "concentration risk", "war", "geopolitical",
+    "tariff", "sanctions", "trade war",
 ]
 
 EARNINGS_KEYWORDS = [
-    "earnings beat", "earnings miss", "earnings per share",
-    "quarterly results", "quarterly earnings", "revenue beat",
-    "revenue miss", "eps beat", "eps miss", "raised guidance",
-    "lowered guidance", "beats estimates", "misses estimates",
-    "reports earnings", "posted earnings",
+    "earnings", "revenue", "eps", "quarterly", "guidance",
+    "beats", "misses", "results", "profit", "loss", "outlook",
 ]
 
 TESLA_KEYWORDS = [
     "tesla", "tsla", "elon musk", "elon", "cybertruck",
-    "model 3", "model y", "model s", "gigafactory", "supercharger",
+    "model 3", "model y", "model s", "gigafactory",
+    "spacex", "doge", "department of government",
 ]
 
 RSS_FEEDS = [
