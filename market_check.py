@@ -45,10 +45,17 @@ TESLA_KEYWORDS = [
 ]
 
 RSS_FEEDS = [
+    # Reuters — פתוח, אמין, מאפשר scraping
+    "https://feeds.reuters.com/reuters/businessNews",
+    "https://feeds.reuters.com/reuters/companyNews",
+    # CNBC Markets
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
+    # Investopedia News
+    "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline",
+    # Yahoo Finance
     "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US",
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA&region=US&lang=en-US",
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
-    "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best",
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA,AAPL&region=US&lang=en-US",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
@@ -173,45 +180,69 @@ def parse_date(s):
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 def summarize_article(title, link):
-    """שולף את תוכן הכתבה ומסכם בעברית עם Groq"""
+    """שולף כתבה ומסכם בעברית — רק אם יש מספיק תוכן אמיתי"""
     if not GROQ_API_KEY:
         return None
     try:
-        # שלוף את תוכן הכתבה
-        html = fetch_url(link)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        }
+        html = fetch_url(link, headers=headers)
         if not html:
             return None
-        # נקה HTML — קח רק טקסט
+
+        # נקה HTML
         text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
         text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
         text = re.sub(r'<[^>]+>', ' ', text)
         text = re.sub(r'\s+', ' ', text).strip()
-        # קח עד 3000 תווים
-        text = text[:3000]
+        text = text[:4000]
+
+        # בדוק חסימה / paywall
+        block_phrases = [
+            "subscribe to read", "sign in to read", "create an account",
+            "403 forbidden", "access denied", "subscribe now",
+            "to continue reading", "already a subscriber"
+        ]
+        if any(p in text.lower() for p in block_phrases):
+            return None
+
+        # דרוש מינימום תוכן אמיתי
         if len(text) < 500:
             return None
 
-        prompt = f"""סכם את הכתבה הבאה בעברית ב-4-5 משפטים.
-חשוב מאוד: השתמש רק במידע שמופיע בטקסט. אל תמציא עובדות, שמות או נתונים.
-אם אין מספיק מידע — כתוב רק מה שברור מהטקסט.
+        prompt = f"""You are a financial news summarizer. Summarize the article below in Hebrew (3-4 sentences).
 
-כותרת: {title}
-תוכן: {text}
+STRICT RULES:
+- Use ONLY information explicitly stated in the text
+- Do NOT invent numbers, names, or facts
+- Do NOT add conclusions not in the text
+- If the text lacks financial content, respond with exactly: SKIP
 
-סיכום בעברית:"""
+Title: {title}
+Text: {text}
+
+Hebrew summary:"""
 
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json; charset=utf-8"},
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
             json={
                 "model": "llama-3.1-8b-instant",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 300,
-                "temperature": 0.3,
+                "max_tokens": 350,
+                "temperature": 0.1,
             },
             timeout=15
         )
-        return r.json()["choices"][0]["message"]["content"].strip()[:800]
+        result = r.json()["choices"][0]["message"]["content"].strip()
+
+        if result.strip().upper() == "SKIP" or len(result) < 40:
+            return None
+
+        return result[:600]
     except Exception as e:
         print(f"Groq error: {e}")
         return None
