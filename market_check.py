@@ -117,7 +117,13 @@ def fetch_url(url, headers=None):
             h.update(headers)
         req = urllib.request.Request(url, headers=h)
         with urllib.request.urlopen(req, timeout=8) as r:
-            return r.read().decode("utf-8", errors="ignore")
+            raw = r.read()
+            for enc in ["utf-8", "utf-8-sig", "latin-1", "cp1252"]:
+                try:
+                    return raw.decode(enc, errors="ignore")
+                except:
+                    continue
+            return raw.decode("utf-8", errors="ignore")
     except:
         return ""
 
@@ -182,15 +188,22 @@ def summarize_article(title, link):
         if len(text) < 200:
             return None
 
-        prompt = f"""סכם את הכתבה הבאה בעברית ב-3-4 משפטים קצרים וברורים. 
-כתוב רק את הסיכום, ללא כותרת, ללא הסברים נוספים.
+        prompt = f"""אתה עוזר פיננסי. קרא את הכתבה הבאה וסכם אותה בעברית.
+
+כתוב סיכום מפורט של כל הנקודות החשובות:
+- מה קרה?
+- מה המשמעות לשווקים?
+- אילו מספרים/נתונים חשובים מוזכרים?
+- מה הצפי להמשך?
+
+כתוב בצורה ברורה, 4-6 משפטים. רק את הסיכום עצמו, ללא כותרת.
 
 כותרת: {title}
 תוכן: {text}"""
 
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json; charset=utf-8"},
             json={
                 "model": "llama-3.1-8b-instant",
                 "messages": [{"role": "user", "content": prompt}],
@@ -340,11 +353,20 @@ def check_news(state):
             else:
                 emoji, tag = "⚡", "תנועת שוק"
 
+            # זהה את המקור
+            source = ""
+            if "reuters" in link: source = "רויטרס"
+            elif "yahoo" in link: source = "Yahoo Finance"
+            elif "bloomberg" in link: source = "בלומברג"
+            elif "cnbc" in link: source = "CNBC"
+            elif "wsj" in link: source = "WSJ"
+            else: source = link.split("/")[2].replace("www.","")
+
             summary = summarize_article(title, link)
             if summary:
-                tg_send(f"{emoji} <b>{tag}</b>\n📌 {title}\n\n{summary}\n\n🔗 {link}")
+                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 מקור: {source}\n🔗 {link}")
             else:
-                tg_send(f"{emoji} <b>{tag}</b>\n{title}\n🔗 {link}")
+                tg_send(f"{emoji} <b>{tag}</b>\n{title}\n📰 {source}\n🔗 {link}")
             mark(state, key)
 
 
