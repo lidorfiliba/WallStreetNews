@@ -253,7 +253,7 @@ def summarize_article(title, link, rss_desc=""):
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-            json={"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": prompt}],
+            json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": prompt}],
                   "max_tokens": 600, "temperature": 0.1},
             timeout=15
         )
