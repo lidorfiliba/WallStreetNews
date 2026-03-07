@@ -54,11 +54,13 @@ RSS_FEEDS = [
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
 
 # Nitter — מראה טוויטר חינמי עם RSS (מנסה כמה שרתים למקרה שאחד נפל)
-NITTER_SERVERS = [
-    
-    "https://nitter.poast.org",
-    "https://nitter.privacyredirect.com",
-    "https://lightbrd.com",
+GOOGLE_NEWS_FEEDS = [
+    ("https://news.google.com/rss/search?q=elon+musk&hl=en&gl=US&ceid=US:en",                   "🔴⭐ אילון מאסק"),
+    ("https://news.google.com/rss/search?q=tesla+stock+TSLA&hl=en&gl=US&ceid=US:en",             "⭐ טסלה"),
+    ("https://news.google.com/rss/search?q=unusual+options+activity+sweep&hl=en&gl=US&ceid=US:en","🎯 אופציות חריגות"),
+    ("https://news.google.com/rss/search?q=stock+market+crash+OR+rally&hl=en&gl=US&ceid=US:en",  "📊 שוק ההון"),
+    ("https://news.google.com/rss/search?q=federal+reserve+interest+rate&hl=en&gl=US&ceid=US:en","🏦 פד"),
+    ("https://news.google.com/rss/search?q=nvidia+NVDA+stock&hl=en&gl=US&ceid=US:en",            "🟢 אנבידיה"),
 ]
 
 TWITTER_ACCOUNTS = [
@@ -372,71 +374,39 @@ def check_news(state):
 
 
 def check_twitter_nitter(state):
-    """ציוצים חמים מטוויטר דרך Nitter RSS"""
+    """חדשות מ-Google News RSS (החליף את Nitter)"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
-    for account, label in TWITTER_ACCOUNTS:
-        feed_url = None
-
-        # נסה כל שרת nitter עד שאחד עובד
-        for server in NITTER_SERVERS:
-            try:
-                url = f"{server}/{account}/rss"
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=6) as r:
-                    xml = r.read().decode("utf-8", errors="ignore")
-                if "<item>" in xml:
-                    feed_url = url
-                    break
-            except:
-                continue
-
-        if not feed_url:
-            continue
-
+    for feed_url, label in GOOGLE_NEWS_FEEDS:
         try:
-            # נקה BOM ותווים מיותרים בהתחלה
-            xml_clean = xml.strip().lstrip('\ufeff').lstrip()
-            if not xml_clean.startswith('<'):
-                continue
-            root = ET.fromstring(xml_clean)
-            for item in root.iter("item"):
-                title = item.findtext("title", "").strip()
-                link  = item.findtext("link", "").strip()
-                pub   = item.findtext("pubDate", "").strip()
+            items = parse_rss(feed_url)
+            for item in items[:5]:
+                title = item["title"]
+                link  = item["link"]
+                pub   = item["pub"]
 
-                if not title:
-                    continue
-
-                key = f"tw:{account}:{title[:50]}"
+                key = f"gnews:{title[:60]}"
                 if sent(state, key):
                     continue
 
-                # רק ציוצים מהשעה האחרונה
                 pub_dt = parse_date(pub)
                 if pub_dt and (now - pub_dt).total_seconds() > 3600:
                     continue
 
-                # סנן לפי מילות מפתח רלוונטיות
                 tl = title.lower()
                 if not any(kw in tl for kw in TWITTER_FILTER_KEYWORDS):
-                    # אם זה אילון מאסק — שלח הכל (כל ציוץ שלו רלוונטי)
-                    if account != "elonmusk":
+                    if "אילון" not in label and "טסלה" not in label:
                         continue
 
-                # המר קישור nitter לטוויטר אמיתי
-                real_link = link.replace(NITTER_SERVERS[0], "https://twitter.com")
-                for s in NITTER_SERVERS:
-                    real_link = real_link.replace(s, "https://twitter.com")
-
-                tg_send(
-                    f"🐦 <b>{label}</b>\n"
-                    f"{title[:280]}\n"
-                    f"🔗 {real_link}"
-                )
+                source = link.split("/")[2].replace("www.","") if "http" in link else ""
+                summary = summarize_article(title, link)
+                if summary:
+                    tg_send(f"📰 <b>{label}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
+                else:
+                    tg_send(f"📰 <b>{label}</b>\n{title}\n🔗 {link}")
                 mark(state, key)
         except Exception as e:
-            print(f"Nitter parse error ({account}): {e}")
+            print(f"Google News error ({label}): {e}")
 
 def check_opening_bell(state):
     """פתיחת מסחר 16:30 ישראל = 13:30 UTC"""
