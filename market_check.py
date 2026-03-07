@@ -42,17 +42,13 @@ TESLA_KEYWORDS = [
 ]
 
 RSS_FEEDS = [
-    # CNBC Markets
-    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
-    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
-    # Yahoo Finance
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US",
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA,AAPL&region=US&lang=en-US",
-    # Google News — מקורות מגוונים
-    "https://news.google.com/rss/search?q=stock+market+crash+OR+rally+OR+earnings&hl=en&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=tesla+TSLA+stock&hl=en&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=federal+reserve+inflation+CPI&hl=en&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=unusual+options+activity+insider+buying&hl=en&gl=US&ceid=US:en",
+    # Google News — חדשות בזמן אמת
+    "https://news.google.com/rss/search?q=stock+market+wall+street&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
+    "https://news.google.com/rss/search?q=tesla+TSLA+stock&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
+    "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
+    "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
+    "https://news.google.com/rss/search?q=unusual+options+insider+buying+SEC&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
+    "https://news.google.com/rss/search?q=nvidia+nvda+apple+aapl+microsoft+msft&hl=en&gl=US&ceid=US:en&tbs=qdr:h",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
@@ -365,7 +361,7 @@ def check_news(state):
                 continue
 
             pub_dt = parse_date(item["pub"])
-            if pub_dt and (now - pub_dt).total_seconds() > 3600:
+            if pub_dt and (now - pub_dt).total_seconds() > 7200:
                 continue
 
             tl = title.lower()
@@ -416,7 +412,7 @@ def check_twitter_nitter(state):
                     continue
 
                 pub_dt = parse_date(pub)
-                if pub_dt and (now - pub_dt).total_seconds() > 3600:
+                if pub_dt and (now - pub_dt).total_seconds() > 7200:
                     continue
 
                 tl = title.lower()
