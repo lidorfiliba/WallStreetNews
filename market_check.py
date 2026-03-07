@@ -412,11 +412,19 @@ def check_news(state):
                 emoji, tag = "⚡", "תנועת שוק"
 
             source = link.split("/")[2].replace("www.","") if "http" in link else ""
-            summary = summarize_article(title, link)
-            if summary:
-                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
+            # אם הקישור עדיין של Google News — אל תציג אותו
+            if "news.google.com" in link:
+                summary = summarize_article(title, link)
+                if summary:
+                    tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}")
+                else:
+                    tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
             else:
-                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n📰 {source}\n🔗 {link}")
+                summary = summarize_article(title, link)
+                if summary:
+                    tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
+                else:
+                    tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n📰 {source}\n🔗 {link}")
             mark(state, key)
 
 
@@ -445,12 +453,17 @@ def check_twitter_nitter(state):
                     if "אילון" not in label and "טסלה" not in label:
                         continue
 
-                source = link.split("/")[2].replace("www.","") if "http" in link else ""
+                source = link.split("/")[2].replace("www.","") if "http" in link and "news.google.com" not in link else ""
                 summary = summarize_article(title, link)
                 if summary:
-                    tg_send(f"📰 <b>{label}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
+                    msg = f"📰 <b>{label}</b>\n📌 <b>{title}</b>\n\n{summary}"
+                    if source:
+                        msg += f"\n\n📰 {source}\n🔗 {link}"
                 else:
-                    tg_send(f"📰 <b>{label}</b>\n📌 <b>{title}</b>\n📰 {source}\n🔗 {link}")
+                    msg = f"📰 <b>{label}</b>\n📌 <b>{title}</b>"
+                    if source:
+                        msg += f"\n📰 {source}\n🔗 {link}"
+                tg_send(msg)
                 mark(state, key)
         except Exception as e:
             print(f"Google News error ({label}): {e}")
