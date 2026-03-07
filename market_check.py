@@ -161,7 +161,48 @@ def parse_date(s):
             pass
     return None
 
-# ── checks ───────────────────────────────────────────────
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+
+def summarize_article(title, link):
+    """שולף את תוכן הכתבה ומסכם בעברית עם Groq"""
+    if not GROQ_API_KEY:
+        return None
+    try:
+        # שלוף את תוכן הכתבה
+        html = fetch_url(link)
+        if not html:
+            return None
+        # נקה HTML — קח רק טקסט
+        text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+        text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        # קח עד 3000 תווים
+        text = text[:3000]
+        if len(text) < 200:
+            return None
+
+        prompt = f"""סכם את הכתבה הבאה בעברית ב-3-4 משפטים קצרים וברורים. 
+כתוב רק את הסיכום, ללא כותרת, ללא הסברים נוספים.
+
+כותרת: {title}
+תוכן: {text}"""
+
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 300,
+                "temperature": 0.3,
+            },
+            timeout=15
+        )
+        return r.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        print(f"Groq error: {e}")
+        return None
 
 def check_sharp_moves(state):
     """תנועות חדות — שולח רק כשיש שינוי חריג חדש"""
@@ -299,7 +340,11 @@ def check_news(state):
             else:
                 emoji, tag = "⚡", "תנועת שוק"
 
-            tg_send(f"{emoji} <b>{tag}</b>\n{title}\n🔗 {link}")
+            summary = summarize_article(title, link)
+            if summary:
+                tg_send(f"{emoji} <b>{tag}</b>\n📌 {title}\n\n{summary}\n\n🔗 {link}")
+            else:
+                tg_send(f"{emoji} <b>{tag}</b>\n{title}\n🔗 {link}")
             mark(state, key)
 
 
