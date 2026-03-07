@@ -188,21 +188,17 @@ def summarize_article(title, link):
         text = re.sub(r'\s+', ' ', text).strip()
         # קח עד 3000 תווים
         text = text[:3000]
-        if len(text) < 200:
+        if len(text) < 500:
             return None
 
-        prompt = f"""אתה עוזר פיננסי. קרא את הכתבה הבאה וסכם אותה בעברית.
-
-כתוב סיכום מפורט של כל הנקודות החשובות:
-- מה קרה?
-- מה המשמעות לשווקים?
-- אילו מספרים/נתונים חשובים מוזכרים?
-- מה הצפי להמשך?
-
-כתוב בצורה ברורה, 4-6 משפטים. רק את הסיכום עצמו, ללא כותרת.
+        prompt = f"""סכם את הכתבה הבאה בעברית ב-4-5 משפטים.
+חשוב מאוד: השתמש רק במידע שמופיע בטקסט. אל תמציא עובדות, שמות או נתונים.
+אם אין מספיק מידע — כתוב רק מה שברור מהטקסט.
 
 כותרת: {title}
-תוכן: {text}"""
+תוכן: {text}
+
+סיכום בעברית:"""
 
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -215,7 +211,7 @@ def summarize_article(title, link):
             },
             timeout=15
         )
-        return r.json()["choices"][0]["message"]["content"].strip()
+        return r.json()["choices"][0]["message"]["content"].strip()[:800]
     except Exception as e:
         print(f"Groq error: {e}")
         return None
