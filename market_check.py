@@ -228,25 +228,39 @@ def summarize_article(title, link, rss_desc=""):
         return None
 
     try:
-        prompt = f"""You are a financial news summarizer. Summarize in Hebrew (3-4 sentences).
-RULES: Use ONLY info from the text. No invented facts. If not financial news, reply: SKIP
+        prompt = f"""אתה מסכם חדשות פיננסיות מקצועי. סכם את הכתבה בעברית בפורמט הבא בדיוק:
 
-Title: {title}
-Text: {text}
+שורת פתיחה: משפט אחד תמציתי שמסכם את הכותרת הראשית (ללא נקודה בסוף).
 
-Hebrew summary:"""
+ואז 3-4 נקודות bullet בפורמט:
+• [נקודה עיקרית ראשונה — עם פרטים ספציפיים, מספרים, שמות]
+• [נקודה שנייה]
+• [נקודה שלישית]
+• [נקודה רביעית אם רלוונטית]
+
+חוקים חשובים:
+- השתמש אך ורק במידע שמופיע בטקסט
+- כלול מספרים, אחוזים, שמות ספציפיים כשיש
+- אל תמציא עובדות
+- אם זה לא חדשות פיננסיות, ענה: SKIP
+- אל תוסיף כותרת "סיכום:" בהתחלה
+
+כותרת: {title}
+טקסט: {text}
+
+סיכום:"""
 
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
             json={"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": prompt}],
-                  "max_tokens": 350, "temperature": 0.1},
+                  "max_tokens": 600, "temperature": 0.1},
             timeout=15
         )
         result = r.json()["choices"][0]["message"]["content"].strip()
         if result.upper() == "SKIP" or len(result) < 40:
             return None
-        return result[:600]
+        return result[:900]
     except Exception as e:
         print(f"Groq error: {e}")
         return None
