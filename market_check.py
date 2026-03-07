@@ -45,17 +45,17 @@ TESLA_KEYWORDS = [
 ]
 
 RSS_FEEDS = [
-    # Reuters — פתוח, אמין, מאפשר scraping
-    "https://feeds.reuters.com/reuters/businessNews",
-    "https://feeds.reuters.com/reuters/companyNews",
     # CNBC Markets
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
-    # Investopedia News
-    "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline",
     # Yahoo Finance
     "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US",
     "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA,AAPL&region=US&lang=en-US",
+    # Google News — מקורות מגוונים
+    "https://news.google.com/rss/search?q=stock+market+crash+OR+rally+OR+earnings&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=tesla+TSLA+stock&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=federal+reserve+inflation+CPI&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=unusual+options+activity+insider+buying&hl=en&gl=US&ceid=US:en",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
