@@ -117,13 +117,13 @@ def mark(state, key):
     state["sent"].append(key)
     state["sent"] = state["sent"][-500:]
 
-def fetch_url(url, headers=None):
+def fetch_url(url, headers=None, timeout=5):
     try:
         h = {"User-Agent": "Mozilla/5.0"}
         if headers:
             h.update(headers)
         req = urllib.request.Request(url, headers=h)
-        with urllib.request.urlopen(req, timeout=8) as r:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
             raw = r.read()
             for enc in ["utf-8", "utf-8-sig", "latin-1", "cp1252"]:
                 try:
@@ -208,7 +208,7 @@ def summarize_article(title, link, rss_desc=""):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             }
-            html = fetch_url(link, headers=headers)
+            html = fetch_url(link, headers=headers, timeout=5)
             if html:
                 t = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
                 t = re.sub(r'<style[^>]*>.*?</style>', '', t, flags=re.DOTALL)
