@@ -150,28 +150,14 @@ def get_ticker(ticker):
         return 0, 0, 0, 1
 
 def extract_real_link(link, item_xml=None):
-    """מוציא קישור אמיתי מ-Google News"""
+    """מוציא קישור אמיתי מ-Google News — רק מה-guid, בלי redirect"""
     if "news.google.com" not in link:
         return link
-    # נסה לחלץ מה-source URL בתוך ה-XML
     if item_xml is not None:
-        src = item_xml.findtext("source") or ""
-        # Google News מכניס את הכתובת האמיתית ב-guid לפעמים
         guid = item_xml.findtext("guid") or ""
         if guid and "news.google.com" not in guid and guid.startswith("http"):
             return guid
-    # נסה redirect
-    try:
-        req = urllib.request.Request(link, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        })
-        with urllib.request.urlopen(req, timeout=6) as r:
-            final = r.url
-            if "news.google.com" not in final:
-                return final
-    except:
-        pass
-    return link
+    return link  # שמור את הקישור כמו שהוא — אל תנסה redirect
 
 def parse_rss(url):
     items = []
