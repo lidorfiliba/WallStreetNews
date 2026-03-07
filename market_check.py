@@ -463,16 +463,39 @@ def check_twitter_nitter(state):
         except Exception as e:
             print(f"Google News error ({label}): {e}")
 
+def get_market_state():
+    """שואל את Yahoo Finance אם השוק פתוח/סגור ומתי"""
+    try:
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1d&range=1d"
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
+        meta = r.json()["chart"]["result"][0]["meta"]
+        state = meta.get("marketState", "")  # REGULAR, PRE, POST, CLOSED
+        open_ts  = meta.get("regularMarketTime", 0)
+        return state, open_ts
+    except:
+        return "", 0
+
 def check_opening_bell(state):
-    """פתיחת מסחר 16:30 ישראל = 13:30 UTC"""
+    """פתיחת מסחר — מזהה אוטומטית לפי Yahoo Finance"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"open:{now.strftime('%Y-%m-%d')}"
-    if not (now.hour == 13 and 30 <= now.minute <= 34):
-        return
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    lines = ["🔔 <b>פתיחת מסחר — וול סטריט 🇺🇸 (16:30 🇮🇱)</b>\n"]
+    market_state, _ = get_market_state()
+    if market_state != "REGULAR":
+        return
+
+    # בדוק שאנחנו בתוך 5 דקות מהפתיחה (13:25-13:35 או 12:25-12:35 UTC)
+    minutes_utc = now.hour * 60 + now.minute
+    is_open_window = (750 <= minutes_utc <= 755) or (805 <= minutes_utc <= 810)
+    if not is_open_window:
+        return
+
+    israel_hour = now.hour + 2 if (now.month > 3 or (now.month == 3 and now.day >= 26)) else now.hour + 3
+    israel_time = f"{israel_hour}:30"
+
+    lines = [f"🔔 <b>פתיחת מסחר — וול סטריט 🇺🇸 ({israel_time} 🇮🇱)</b>\n"]
 
     all_tickers = {}
     for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL"]:
@@ -505,10 +528,20 @@ def get_commodity(symbol):
         return 0, 0
 
 def check_daily_summary(state):
-    """סיכום יומי 23:00 ישראל = 20:00 UTC"""
+    """סיכום יומי — מזהה סגירה אוטומטית לפי Yahoo Finance"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"summary:{now.strftime('%Y-%m-%d')}"
-    if now.hour != 20 or now.weekday() >= 5 or sent(state, key):
+    if now.weekday() >= 5 or sent(state, key):
+        return
+
+    market_state, _ = get_market_state()
+    if market_state not in ("POST", "CLOSED"):
+        return
+
+    # בדוק שאנחנו בתוך 5 דקות מהסגירה (20:00 או 19:00 UTC)
+    minutes_utc = now.hour * 60 + now.minute
+    is_close_window = (1195 <= minutes_utc <= 1200) or (1135 <= minutes_utc <= 1140)
+    if not is_close_window:
         return
 
     today = now.strftime("%d.%m.%Y")
