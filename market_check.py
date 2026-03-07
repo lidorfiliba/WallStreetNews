@@ -217,7 +217,10 @@ def summarize_article(title, link, rss_desc=""):
                 t = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
                 t = re.sub(r'<style[^>]*>.*?</style>', '', t, flags=re.DOTALL)
                 t = re.sub(r'<[^>]+>', ' ', t)
-                t = re.sub(r'\s+', ' ', t).strip()[:4000]
+                t = re.sub(r'\s+', ' ', t).strip()
+                # קח 4000 תווים מהאמצע — שם נמצא תוכן הכתבה
+                mid = len(t) // 3
+                t = t[mid:mid + 4000]
                 block = ["subscribe to read","sign in","create an account","403 forbidden","access denied"]
                 if not any(p in t.lower() for p in block) and len(t) >= 500:
                     text = t
