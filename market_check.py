@@ -179,10 +179,14 @@ def parse_rss(url):
             title = item.findtext("title", "").strip()
             link  = item.findtext("link", "").strip()
             pub   = item.findtext("pubDate", "").strip()
+            desc  = item.findtext("description", "").strip()
+            # נקה HTML מה-description
+            desc = re.sub(r'<[^>]+>', ' ', desc)
+            desc = re.sub(r'\s+', ' ', desc).strip()
             if title:
                 if "news.google.com" in link:
                     link = extract_real_link(link, item)
-                items.append({"title": title, "link": link, "pub": pub})
+                items.append({"title": title, "link": link, "pub": pub, "desc": desc})
     except:
         pass
     return items
@@ -199,51 +203,42 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com"]
 
-def summarize_article(title, link):
-    """שולף כתבה ומסכם בעברית — רק אם יש מספיק תוכן אמיתי"""
+def summarize_article(title, link, rss_desc=""):
+    """מסכם כתבה — קודם מנסה לשלוף, אחרת משתמש ב-description מה-RSS"""
     if not GROQ_API_KEY:
         return None
 
-    # חסום אתרים עם paywall
-    if any(d in link for d in BLOCKED_DOMAINS):
+    text = None
+
+    # נסה לשלוף את הכתבה (אלא אם חסומה)
+    if not any(d in link for d in BLOCKED_DOMAINS) and "news.google.com" not in link:
+        try:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+            html = fetch_url(link, headers=headers)
+            if html:
+                t = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+                t = re.sub(r'<style[^>]*>.*?</style>', '', t, flags=re.DOTALL)
+                t = re.sub(r'<[^>]+>', ' ', t)
+                t = re.sub(r'\s+', ' ', t).strip()[:4000]
+                block = ["subscribe to read","sign in","create an account","403 forbidden","access denied"]
+                if not any(p in t.lower() for p in block) and len(t) >= 500:
+                    text = t
+        except:
+            pass
+
+    # אם לא הצלחנו — השתמש ב-description מה-RSS
+    if not text and len(rss_desc) > 80:
+        text = rss_desc
+
+    if not text:
         return None
+
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-        }
-        html = fetch_url(link, headers=headers)
-        if not html:
-            return None
-
-        # נקה HTML
-        text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
-        text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
-        text = re.sub(r'<[^>]+>', ' ', text)
-        text = re.sub(r'\s+', ' ', text).strip()
-        text = text[:4000]
-
-        # בדוק חסימה / paywall
-        block_phrases = [
-            "subscribe to read", "sign in to read", "create an account",
-            "403 forbidden", "access denied", "subscribe now",
-            "to continue reading", "already a subscriber"
-        ]
-        if any(p in text.lower() for p in block_phrases):
-            return None
-
-        # דרוש מינימום תוכן אמיתי
-        if len(text) < 500:
-            return None
-
-        prompt = f"""You are a financial news summarizer. Summarize the article below in Hebrew (3-4 sentences).
-
-STRICT RULES:
-- Use ONLY information explicitly stated in the text
-- Do NOT invent numbers, names, or facts
-- Do NOT add conclusions not in the text
-- If the text lacks financial content, respond with exactly: SKIP
+        prompt = f"""You are a financial news summarizer. Summarize in Hebrew (3-4 sentences).
+RULES: Use ONLY info from the text. No invented facts. If not financial news, reply: SKIP
 
 Title: {title}
 Text: {text}
@@ -253,23 +248,18 @@ Hebrew summary:"""
         r = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-            json={
-                "model": "llama-3.1-8b-instant",
-                "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 350,
-                "temperature": 0.1,
-            },
+            json={"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": prompt}],
+                  "max_tokens": 350, "temperature": 0.1},
             timeout=15
         )
         result = r.json()["choices"][0]["message"]["content"].strip()
-
-        if result.strip().upper() == "SKIP" or len(result) < 40:
+        if result.upper() == "SKIP" or len(result) < 40:
             return None
-
         return result[:600]
     except Exception as e:
         print(f"Groq error: {e}")
         return None
+
 
 def check_sharp_moves(state):
     """תנועות חדות — שולח רק כשיש שינוי חריג חדש"""
@@ -414,13 +404,13 @@ def check_news(state):
             source = link.split("/")[2].replace("www.","") if "http" in link else ""
             # אם הקישור עדיין של Google News — אל תציג אותו
             if "news.google.com" in link:
-                summary = summarize_article(title, link)
+                summary = summarize_article(title, link, item.get("desc",""))
                 if summary:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}")
                 else:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
             else:
-                summary = summarize_article(title, link)
+                summary = summarize_article(title, link, item.get("desc",""))
                 if summary:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
                 else:
@@ -454,7 +444,7 @@ def check_twitter_nitter(state):
                         continue
 
                 source = link.split("/")[2].replace("www.","") if "http" in link and "news.google.com" not in link else ""
-                summary = summarize_article(title, link)
+                summary = summarize_article(title, link, item.get("desc",""))
                 if summary:
                     msg = f"📰 <b>{label}</b>\n📌 <b>{title}</b>\n\n{summary}"
                     if source:
