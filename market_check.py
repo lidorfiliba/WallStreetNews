@@ -42,12 +42,17 @@ TESLA_KEYWORDS = [
 ]
 
 RSS_FEEDS = [
-    "https://news.google.com/rss/search?q=stock+market+wall+street&hl=en&gl=US&ceid=US:en",
+    # CNBC — תקציר אמיתי בתוך ה-RSS, קישורים אמיתיים
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
+    # Yahoo Finance
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US",
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA,AAPL&region=US&lang=en-US",
+    # Google News — כיסוי רחב
     "https://news.google.com/rss/search?q=tesla+TSLA+elon+musk&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=unusual+options+insider+buying+SEC&hl=en&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=nvidia+nvda+apple+aapl+microsoft+msft&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=unusual+options+insider+buying&hl=en&gl=US&ceid=US:en",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
