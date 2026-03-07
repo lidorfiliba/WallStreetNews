@@ -352,20 +352,12 @@ def check_news(state):
             else:
                 emoji, tag = "⚡", "תנועת שוק"
 
-            # זהה את המקור
-            source = ""
-            if "reuters" in link: source = "רויטרס"
-            elif "yahoo" in link: source = "Yahoo Finance"
-            elif "bloomberg" in link: source = "בלומברג"
-            elif "cnbc" in link: source = "CNBC"
-            elif "wsj" in link: source = "WSJ"
-            else: source = link.split("/")[2].replace("www.","")
-
+            source = link.split("/")[2].replace("www.","") if "http" in link else ""
             summary = summarize_article(title, link)
             if summary:
-                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 מקור: {source}\n🔗 {link}")
+                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
             else:
-                tg_send(f"{emoji} <b>{tag}</b>\n{title}\n📰 {source}\n🔗 {link}")
+                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n📰 {source}\n🔗 {link}")
             mark(state, key)
 
 
@@ -399,7 +391,7 @@ def check_twitter_nitter(state):
                 if summary:
                     tg_send(f"📰 <b>{label}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
                 else:
-                    tg_send(f"📰 <b>{label}</b>\n{title}\n🔗 {link}")
+                    tg_send(f"📰 <b>{label}</b>\n📌 <b>{title}</b>\n📰 {source}\n🔗 {link}")
                 mark(state, key)
         except Exception as e:
             print(f"Google News error ({label}): {e}")
