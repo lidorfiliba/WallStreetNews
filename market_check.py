@@ -395,7 +395,11 @@ def check_twitter_nitter(state):
             continue
 
         try:
-            root = ET.fromstring(xml)
+            # נקה BOM ותווים מיותרים בהתחלה
+            xml_clean = xml.strip().lstrip('\ufeff').lstrip()
+            if not xml_clean.startswith('<'):
+                continue
+            root = ET.fromstring(xml_clean)
             for item in root.iter("item"):
                 title = item.findtext("title", "").strip()
                 link  = item.findtext("link", "").strip()
