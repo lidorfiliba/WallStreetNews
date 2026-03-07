@@ -55,9 +55,10 @@ SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
 
 # Nitter — מראה טוויטר חינמי עם RSS (מנסה כמה שרתים למקרה שאחד נפל)
 NITTER_SERVERS = [
-    "https://nitter.privacydev.net",
+    "https://xcancel.com",
     "https://nitter.poast.org",
-    "https://nitter.1d4.us",
+    "https://nitter.privacyredirect.com",
+    "https://lightbrd.com",
 ]
 
 TWITTER_ACCOUNTS = [
