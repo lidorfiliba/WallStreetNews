@@ -196,7 +196,7 @@ def parse_date(s):
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
-BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "benzinga.com", "uk.finance.yahoo.com", "marketwatch.com"]
+BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com"]
 
 def summarize_article(title, link, rss_desc=""):
     """מסכם כתבה — קודם מנסה לשלוף, אחרת משתמש ב-description מה-RSS"""
