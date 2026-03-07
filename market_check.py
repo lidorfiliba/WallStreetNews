@@ -179,9 +179,15 @@ def parse_date(s):
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
+BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com"]
+
 def summarize_article(title, link):
     """שולף כתבה ומסכם בעברית — רק אם יש מספיק תוכן אמיתי"""
     if not GROQ_API_KEY:
+        return None
+
+    # חסום אתרים עם paywall
+    if any(d in link for d in BLOCKED_DOMAINS):
         return None
     try:
         headers = {
@@ -372,6 +378,10 @@ def check_news(state):
             is_move     = any(k in tl for k in MARKET_MOVE_KEYWORDS)
 
             if not any([is_tesla, is_macro, is_earnings, is_move]):
+                continue
+
+            # סנן מקורות לא אמינים לסיכום
+            if any(d in link for d in BLOCKED_DOMAINS):
                 continue
 
             if is_tesla:
