@@ -56,6 +56,14 @@ MAG7_KEYWORDS = [
     "nvidia", "nvda", "jensen huang", "blackwell", "cuda", "h100", "h200",
 ]
 
+COMMODITIES_KEYWORDS = [
+    "oil", "crude", "wti", "brent", "opec", "petroleum", "gasoline", "barrel",
+    "strait of hormuz", "energy prices", "oil price",
+    "gold", "silver", "precious metals", "xau", "xag", "bullion",
+    "gold price", "silver price",
+    "commodities", "copper", "natural gas",
+]
+
 RSS_FEEDS = [
     # CNBC — תקציר אמיתי בתוך ה-RSS, קישורים אמיתיים
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
@@ -72,6 +80,11 @@ RSS_FEEDS = [
     "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=unusual+options+insider+buying&hl=en&gl=US&ceid=US:en",
+    # סחורות
+    "https://news.google.com/rss/search?q=oil+crude+price+barrel&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=gold+silver+price+commodities&hl=en&gl=US&ceid=US:en",
+    # MAG7
+    "https://news.google.com/rss/search?q=nvidia+apple+microsoft+meta+amazon+google+stock&hl=en&gl=US&ceid=US:en",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
@@ -407,13 +420,14 @@ def check_news(state):
                 continue
 
             tl = title.lower()
-            is_tesla    = any(k in tl for k in TESLA_KEYWORDS)
-            is_mag7     = any(k in tl for k in MAG7_KEYWORDS)
-            is_macro    = any(k.lower() in tl for k in MACRO_KEYWORDS)
-            is_earnings = any(k in tl for k in EARNINGS_KEYWORDS)
-            is_move     = any(k in tl for k in MARKET_MOVE_KEYWORDS)
+            is_tesla       = any(k in tl for k in TESLA_KEYWORDS)
+            is_mag7        = any(k in tl for k in MAG7_KEYWORDS)
+            is_macro       = any(k.lower() in tl for k in MACRO_KEYWORDS)
+            is_earnings    = any(k in tl for k in EARNINGS_KEYWORDS)
+            is_move        = any(k in tl for k in MARKET_MOVE_KEYWORDS)
+            is_commodities = any(k in tl for k in COMMODITIES_KEYWORDS)
 
-            if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move]):
+            if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move, is_commodities]):
                 continue
 
             # סנן מקורות לא אמינים לסיכום
@@ -428,6 +442,15 @@ def check_news(state):
                 emoji, tag = "📊", "מאקרו"
             elif is_earnings:
                 emoji, tag = "💰", "דוח רבעוני"
+            elif is_commodities:
+                if any(k in tl for k in ["oil","crude","wti","brent","opec","barrel","gasoline","petroleum"]):
+                    emoji, tag = "🛢️", "נפט"
+                elif any(k in tl for k in ["gold","xau","bullion"]):
+                    emoji, tag = "🥇", "זהב"
+                elif any(k in tl for k in ["silver","xag"]):
+                    emoji, tag = "🥈", "כסף"
+                else:
+                    emoji, tag = "🌾", "סחורות"
             else:
                 emoji, tag = "⚡", "תנועת שוק"
 
