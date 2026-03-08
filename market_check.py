@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 import urllib.request
 import xml.etree.ElementTree as ET
 
-TG_BOT_TOKEN = "8055798978:AAGUJZnv1M5ZHAg2cxMmNzTDShNclh2PGig"
+TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
 TG_CHAT_ID   = -1003609757340
 STATE_FILE   = "market_state.json"
 
