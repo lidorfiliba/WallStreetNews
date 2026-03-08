@@ -8,7 +8,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
-TG_CHAT_ID   = -1003549323911
+TG_CHAT_ID   = -1003609757340
 STATE_FILE   = "market_state.json"
 
 WATCHLIST = ["TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "SPY", "QQQ"]
@@ -39,6 +39,21 @@ TESLA_KEYWORDS = [
     "tesla", "tsla", "elon musk", "elon", "cybertruck",
     "model 3", "model y", "model s", "gigafactory",
     "spacex", "doge", "department of government",
+]
+
+MAG7_KEYWORDS = [
+    # Apple
+    "apple", "aapl", "tim cook", "iphone", "ipad", "mac", "app store",
+    # Microsoft
+    "microsoft", "msft", "satya nadella", "azure", "copilot", "openai",
+    # Google
+    "google", "googl", "alphabet", "sundar pichai", "gemini", "youtube",
+    # Amazon
+    "amazon", "amzn", "andy jassy", "aws", "prime",
+    # Meta
+    "meta", "facebook", "instagram", "whatsapp", "mark zuckerberg", "zuckerberg",
+    # Nvidia
+    "nvidia", "nvda", "jensen huang", "blackwell", "cuda", "h100", "h200",
 ]
 
 RSS_FEEDS = [
@@ -393,11 +408,12 @@ def check_news(state):
 
             tl = title.lower()
             is_tesla    = any(k in tl for k in TESLA_KEYWORDS)
+            is_mag7     = any(k in tl for k in MAG7_KEYWORDS)
             is_macro    = any(k.lower() in tl for k in MACRO_KEYWORDS)
             is_earnings = any(k in tl for k in EARNINGS_KEYWORDS)
             is_move     = any(k in tl for k in MARKET_MOVE_KEYWORDS)
 
-            if not any([is_tesla, is_macro, is_earnings, is_move]):
+            if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move]):
                 continue
 
             # סנן מקורות לא אמינים לסיכום
@@ -406,6 +422,8 @@ def check_news(state):
 
             if is_tesla:
                 emoji, tag = "🔴⭐", "טסלה"
+            elif is_mag7:
+                emoji, tag = "🏢", "MAG7"
             elif is_macro:
                 emoji, tag = "📊", "מאקרו"
             elif is_earnings:
