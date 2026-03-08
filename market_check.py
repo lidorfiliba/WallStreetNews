@@ -8,7 +8,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
-TG_CHAT_ID   = -1003609757340
+TG_CHAT_ID   = -1003549323911
 STATE_FILE   = "market_state.json"
 
 WATCHLIST = ["TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL", "SPY", "QQQ"]
