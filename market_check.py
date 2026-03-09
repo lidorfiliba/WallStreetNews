@@ -157,15 +157,18 @@ def fetch_url(url, headers=None, timeout=5):
 
 def get_ticker(ticker):
     try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=2d"
+        # range=5d כדי לקבל נתוני close של יום המסחר הקודם
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d"
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
         data = r.json()
-        meta   = data["chart"]["result"][0]["meta"]
+        result = data["chart"]["result"][0]
+        meta   = result["meta"]
         price  = meta.get("regularMarketPrice", 0)
-        prev   = meta.get("regularMarketPreviousClose") or meta.get("chartPreviousClose", 0)
-        change = meta.get("regularMarketChangePercent")
-        if change is None:
-            change = ((price - prev) / prev * 100) if prev else 0
+        # קח את הסגירה של יום המסחר הקודם מתוך הנרות
+        closes = result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+        closes = [c for c in closes if c is not None]
+        prev = closes[-1] if closes else meta.get("regularMarketPreviousClose", 0)
+        change = ((price - prev) / prev * 100) if prev else 0
         volume = meta.get("regularMarketVolume", 0)
         avg_vol= meta.get("averageDailyVolume10Day", 1)
         return price, change, volume, avg_vol
@@ -552,10 +555,9 @@ def check_opening_bell(state):
     if market_state != "REGULAR":
         return
 
-    # בדוק שאנחנו בתוך 30 דקות מפתיחת השוק
+    # בדוק שאנחנו בתוך 45 דקות מהפתיחה
     minutes_utc = now.hour * 60 + now.minute
-    # פתיחה רגילה 13:30 UTC (שעון חורף) או 12:30 UTC (שעון קיץ אמריקאי)
-    is_open_window = (730 <= minutes_utc <= 770) or (790 <= minutes_utc <= 840)
+    is_open_window = (725 <= minutes_utc <= 775) or (785 <= minutes_utc <= 845)
     if not is_open_window:
         return
 
