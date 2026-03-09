@@ -545,27 +545,28 @@ def get_market_state():
         return "", 0
 
 def check_opening_bell(state):
-    """פתיחת מסחר — מזהה אוטומטית לפי Yahoo Finance, בלי שעות קשיחות"""
+    """פתיחת מסחר — מזהה אוטומטית לפי Yahoo Finance"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"open:{now.strftime('%Y-%m-%d')}"
     if now.weekday() >= 5 or sent(state, key):
         return
 
     market_state, open_ts = get_market_state()
-    if market_state != "REGULAR":
+
+    # אם Yahoo מחזיר state ברור שהשוק סגור — עצור
+    if market_state and market_state not in ("REGULAR", ""):
         return
 
-    # וודא שאנחנו בתוך 30 דקות מרגע הפתיחה האמיתי לפי Yahoo
-    if open_ts:
-        open_dt = datetime.utcfromtimestamp(open_ts)
-        minutes_since_open = (now - open_dt).total_seconds() / 60
-        if not (0 <= minutes_since_open <= 30):
-            return
+    # סמוך על regularMarketTime — תוך 30 דקות מהפתיחה
+    if not open_ts:
+        return
+    open_dt = datetime.utcfromtimestamp(open_ts)
+    minutes_since_open = (now - open_dt).total_seconds() / 60
+    if not (0 <= minutes_since_open <= 30):
+        return
 
-    # שעון ישראל אוטומטי מה-UTC
-    from datetime import timezone as tz
-    import time as time_mod
-    israel_offset = 3 if time_mod.daylight else 2
+    # שעון ישראל אוטומטי
+    israel_offset = 2 if now.month >= 4 and now.month <= 10 else 3
     israel_dt = now + timedelta(hours=israel_offset)
     israel_time = israel_dt.strftime("%H:%M")
 
@@ -581,6 +582,7 @@ def check_opening_bell(state):
         star  = "⭐ " if ticker == "TSLA" else ""
         lines.append(f"{arrow} {star}{ticker}: ${price:.2f} ({change:+.2f}%)")
 
+    # מוביל עליות וירידות
     best  = max(all_tickers.items(), key=lambda x: x[1][1])
     worst = min(all_tickers.items(), key=lambda x: x[1][1])
     lines.append(f"\n🏆 מוביל יום: {best[0]} ({best[1][1]:+.2f}%)")
@@ -603,22 +605,25 @@ def get_commodity(symbol):
         return 0, 0
 
 def check_daily_summary(state):
-    """סיכום יומי — מזהה סגירה אוטומטית לפי Yahoo Finance, בלי שעות קשיחות"""
+    """סיכום יומי — מזהה סגירה אוטומטית לפי Yahoo Finance"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"summary:{now.strftime('%Y-%m-%d')}"
     if now.weekday() >= 5 or sent(state, key):
         return
 
     market_state, open_ts = get_market_state()
-    if market_state not in ("POST", "CLOSED"):
+
+    # אם Yahoo מחזיר state ברור שהשוק פתוח — עצור
+    if market_state and market_state == "REGULAR":
         return
 
-    # וודא שאנחנו בתוך 30 דקות מהסגירה (open_ts = זמן פתיחה, סגירה = פתיחה + 6.5 שעות)
-    if open_ts:
-        close_dt = datetime.utcfromtimestamp(open_ts) + timedelta(hours=6, minutes=30)
-        minutes_since_close = (now - close_dt).total_seconds() / 60
-        if not (0 <= minutes_since_close <= 30):
-            return
+    # סגירה = פתיחה + 6.5 שעות, תוך 30 דקות מהסגירה
+    if not open_ts:
+        return
+    close_dt = datetime.utcfromtimestamp(open_ts) + timedelta(hours=6, minutes=30)
+    minutes_since_close = (now - close_dt).total_seconds() / 60
+    if not (0 <= minutes_since_close <= 30):
+        return
 
     today = now.strftime("%d.%m.%Y")
     lines = [f"📉📈 <b>יום המסחר הסתיים — {today}</b>\n"]
