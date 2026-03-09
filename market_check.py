@@ -163,9 +163,9 @@ def get_ticker(ticker):
         meta   = data["chart"]["result"][0]["meta"]
         price  = meta.get("regularMarketPrice", 0)
         prev   = meta.get("regularMarketPreviousClose") or meta.get("chartPreviousClose", 0)
-        change = meta.get("regularMarketChangePercent", 0)
-        if not change and prev:
-            change = ((price - prev) / prev * 100)
+        change = meta.get("regularMarketChangePercent")
+        if change is None:
+            change = ((price - prev) / prev * 100) if prev else 0
         volume = meta.get("regularMarketVolume", 0)
         avg_vol= meta.get("averageDailyVolume10Day", 1)
         return price, change, volume, avg_vol
