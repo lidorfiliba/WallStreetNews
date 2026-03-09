@@ -551,18 +551,23 @@ def check_opening_bell(state):
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    market_state, _ = get_market_state()
+    market_state, open_ts = get_market_state()
     if market_state != "REGULAR":
         return
 
-    # בדוק שאנחנו בתוך 45 דקות מהפתיחה
+    # בדוק שאנחנו בתוך 45 דקות מהפתיחה (13:30 UTC = 810 או 14:30 UTC = 870)
     minutes_utc = now.hour * 60 + now.minute
-    is_open_window = (725 <= minutes_utc <= 775) or (785 <= minutes_utc <= 845)
+    is_open_window = (810 <= minutes_utc <= 855) or (870 <= minutes_utc <= 915)
     if not is_open_window:
         return
 
-    israel_hour = now.hour + 2 if (now.month > 3 or (now.month == 3 and now.day >= 26)) else now.hour + 3
-    israel_time = f"{israel_hour}:30"
+    # שמור זמן פתיחה אמיתי ב-state לשימוש בסגירה
+    state["today_open_ts"] = open_ts if open_ts else int(now.timestamp())
+
+    # שעון ישראל אוטומטי
+    israel_offset = 2 if now.month >= 4 and now.month <= 10 else 3
+    israel_dt = now + timedelta(hours=israel_offset)
+    israel_time = israel_dt.strftime("%H:%M")
 
     fg_score, fg_label = get_fear_greed()
     fg_line = f"\n😨 <b>Fear & Greed:</b> {fg_score} — {fg_label}" if fg_score else ""
@@ -615,20 +620,23 @@ def get_commodity(symbol):
         return 0, 0
 
 def check_daily_summary(state):
-    """סיכום יומי — מזהה סגירה אוטומטית לפי Yahoo Finance"""
+    """סיכום יומי — מחשב סגירה מזמן הפתיחה שנשמר ב-state"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"summary:{now.strftime('%Y-%m-%d')}"
     if now.weekday() >= 5 or sent(state, key):
         return
 
     market_state, _ = get_market_state()
-    if market_state not in ("POST", "CLOSED"):
+    if market_state == "REGULAR":
         return
 
-    # בדוק שאנחנו בתוך 5 דקות מהסגירה (20:00 או 19:00 UTC)
-    minutes_utc = now.hour * 60 + now.minute
-    is_close_window = (1195 <= minutes_utc <= 1200) or (1135 <= minutes_utc <= 1140)
-    if not is_close_window:
+    # שמוש בזמן הפתיחה שנשמר בפתיחת הבוקר — סגירה = פתיחה + 6.5 שעות
+    open_ts = state.get("today_open_ts", 0)
+    if not open_ts:
+        return
+    close_dt = datetime.utcfromtimestamp(open_ts) + timedelta(hours=6, minutes=30)
+    minutes_since_close = (now - close_dt).total_seconds() / 60
+    if not (0 <= minutes_since_close <= 30):
         return
 
     today = now.strftime("%d.%m.%Y")
