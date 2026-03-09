@@ -162,8 +162,10 @@ def get_ticker(ticker):
         data = r.json()
         meta   = data["chart"]["result"][0]["meta"]
         price  = meta.get("regularMarketPrice", 0)
-        prev   = meta.get("chartPreviousClose", 0)
-        change = ((price - prev) / prev * 100) if prev else 0
+        prev   = meta.get("regularMarketPreviousClose") or meta.get("chartPreviousClose", 0)
+        change = meta.get("regularMarketChangePercent", 0)
+        if not change and prev:
+            change = ((price - prev) / prev * 100)
         volume = meta.get("regularMarketVolume", 0)
         avg_vol= meta.get("averageDailyVolume10Day", 1)
         return price, change, volume, avg_vol
@@ -550,9 +552,10 @@ def check_opening_bell(state):
     if market_state != "REGULAR":
         return
 
-    # בדוק שאנחנו בתוך 5 דקות מהפתיחה (13:25-13:35 או 12:25-12:35 UTC)
+    # בדוק שאנחנו בתוך 30 דקות מפתיחת השוק
     minutes_utc = now.hour * 60 + now.minute
-    is_open_window = (745 <= minutes_utc <= 765) or (800 <= minutes_utc <= 820)
+    # פתיחה רגילה 13:30 UTC (שעון חורף) או 12:30 UTC (שעון קיץ אמריקאי)
+    is_open_window = (730 <= minutes_utc <= 760) or (790 <= minutes_utc <= 820)
     if not is_open_window:
         return
 
