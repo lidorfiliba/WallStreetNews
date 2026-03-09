@@ -56,6 +56,8 @@ MAG7_KEYWORDS = [
     "nvidia", "nvda", "jensen huang", "blackwell", "cuda", "h100", "h200",
 ]
 
+BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com"]
+
 RSS_FEEDS = [
     # CNBC — תקציר אמיתי בתוך ה-RSS, קישורים אמיתיים
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
