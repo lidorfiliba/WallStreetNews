@@ -551,24 +551,18 @@ def check_opening_bell(state):
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    market_state, open_ts = get_market_state()
-
-    # אם Yahoo מחזיר state ברור שהשוק סגור — עצור
-    if market_state and market_state not in ("REGULAR", ""):
+    market_state, _ = get_market_state()
+    if market_state != "REGULAR":
         return
 
-    # סמוך על regularMarketTime — תוך 30 דקות מהפתיחה
-    if not open_ts:
-        return
-    open_dt = datetime.utcfromtimestamp(open_ts)
-    minutes_since_open = (now - open_dt).total_seconds() / 60
-    if not (0 <= minutes_since_open <= 30):
+    # בדוק שאנחנו בתוך 45 דקות מהפתיחה
+    minutes_utc = now.hour * 60 + now.minute
+    is_open_window = (725 <= minutes_utc <= 775) or (785 <= minutes_utc <= 845)
+    if not is_open_window:
         return
 
-    # שעון ישראל אוטומטי
-    israel_offset = 2 if now.month >= 4 and now.month <= 10 else 3
-    israel_dt = now + timedelta(hours=israel_offset)
-    israel_time = israel_dt.strftime("%H:%M")
+    israel_hour = now.hour + 2 if (now.month > 3 or (now.month == 3 and now.day >= 26)) else now.hour + 3
+    israel_time = f"{israel_hour}:30"
 
     fg_score, fg_label = get_fear_greed()
     fg_line = f"\n😨 <b>Fear & Greed:</b> {fg_score} — {fg_label}" if fg_score else ""
@@ -587,6 +581,22 @@ def check_opening_bell(state):
     worst = min(all_tickers.items(), key=lambda x: x[1][1])
     lines.append(f"\n🏆 מוביל יום: {best[0]} ({best[1][1]:+.2f}%)")
     lines.append(f"💥 מפסיד יום: {worst[0]} ({worst[1][1]:+.2f}%)")
+
+    # סחורות ומתכות
+    lines.append("\n🛢️ <b>סחורות ומתכות</b>")
+    for symbol, label, decimals in [("GC=F","🥇 זהב",0),("SI=F","🥈 כסף",2),("CL=F","🛢️ נפט",2)]:
+        price, change = get_commodity(symbol)
+        if price:
+            arrow = "🟢" if change >= 0 else "🔴"
+            lines.append(f"{arrow} {label}: ${price:.{decimals}f} ({change:+.2f}%)")
+
+    # קריפטו
+    lines.append("\n₿ <b>קריפטו</b>")
+    for symbol, label in [("BTC-USD","₿ ביטקוין"),("ETH-USD","Ξ אתריום")]:
+        price, change = get_commodity(symbol)
+        if price:
+            arrow = "🟢" if change >= 0 else "🔴"
+            lines.append(f"{arrow} {label}: ${price:,.0f} ({change:+.2f}%)")
 
     tg_send("\n".join(lines))
     mark(state, key)
@@ -611,18 +621,14 @@ def check_daily_summary(state):
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    market_state, open_ts = get_market_state()
-
-    # אם Yahoo מחזיר state ברור שהשוק פתוח — עצור
-    if market_state and market_state == "REGULAR":
+    market_state, _ = get_market_state()
+    if market_state not in ("POST", "CLOSED"):
         return
 
-    # סגירה = פתיחה + 6.5 שעות, תוך 30 דקות מהסגירה
-    if not open_ts:
-        return
-    close_dt = datetime.utcfromtimestamp(open_ts) + timedelta(hours=6, minutes=30)
-    minutes_since_close = (now - close_dt).total_seconds() / 60
-    if not (0 <= minutes_since_close <= 30):
+    # בדוק שאנחנו בתוך 5 דקות מהסגירה (20:00 או 19:00 UTC)
+    minutes_utc = now.hour * 60 + now.minute
+    is_close_window = (1195 <= minutes_utc <= 1200) or (1135 <= minutes_utc <= 1140)
+    if not is_close_window:
         return
 
     today = now.strftime("%d.%m.%Y")
