@@ -753,16 +753,17 @@ def get_fear_greed():
         return None, None
 
 def get_vix():
-    """VIX מ-Yahoo Finance"""
+    """VIX מ-Yahoo Finance — אחוז מסגירה של יום המסחר הקודם"""
     try:
         url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5d"
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
         data = r.json()["chart"]["result"][0]
         meta = data["meta"]
         price = meta.get("regularMarketPrice", 0)
-        prev  = meta.get("regularMarketPreviousClose", 0)
-        if not prev:
-            prev = meta.get("chartPreviousClose", 0)
+        # קח סגירה של יום המסחר הקודם מהנרות
+        closes = data.get("indicators", {}).get("quote", [{}])[0].get("close", [])
+        closes = [c for c in closes if c is not None]
+        prev = closes[-1] if closes else meta.get("regularMarketPreviousClose", 0)
         change = ((price - prev) / prev * 100) if prev else 0
         return round(price, 2), round(change, 2)
     except:
