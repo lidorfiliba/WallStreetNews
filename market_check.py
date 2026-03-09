@@ -380,6 +380,9 @@ def check_insider(state):
             entity = src.get("entity_name", "")
             filed  = src.get("file_date", "")
             acc    = src.get("accession_no", "")
+
+            if not acc or not entity or len(acc) < 5:
+                continue
             key    = f"insider:{acc}"
             if sent(state, key):
                 continue
@@ -387,13 +390,12 @@ def check_insider(state):
             is_tesla = "tesla" in entity.lower()
             emoji    = "🔴⭐" if is_tesla else "🐋"
             label    = " [TSLA]" if is_tesla else ""
-            acc_fmt = acc.replace("-", "")
-            link    = f"https://www.sec.gov/Archives/edgar/data/{acc_fmt[:10]}/{acc_fmt}/{acc}-index.htm"
+            link    = f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={entity[:30]}&type=4&dateb=&owner=include&count=5"
             tg_send(
                 f"{emoji} <b>Insider Buying{label}</b>\n"
                 f"🏢 {entity}\n"
                 f"📅 {filed}\n"
-                f"🔗 https://efts.sec.gov/LATEST/search-index?q=%22{acc}%22&forms=4"
+                f"🔗 {link}"
             )
             mark(state, key)
     except Exception as e:
