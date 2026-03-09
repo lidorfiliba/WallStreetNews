@@ -555,7 +555,7 @@ def check_opening_bell(state):
     # בדוק שאנחנו בתוך 30 דקות מפתיחת השוק
     minutes_utc = now.hour * 60 + now.minute
     # פתיחה רגילה 13:30 UTC (שעון חורף) או 12:30 UTC (שעון קיץ אמריקאי)
-    is_open_window = (730 <= minutes_utc <= 760) or (790 <= minutes_utc <= 820)
+    is_open_window = (730 <= minutes_utc <= 770) or (790 <= minutes_utc <= 840)
     if not is_open_window:
         return
 
