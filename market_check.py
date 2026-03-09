@@ -167,7 +167,7 @@ def get_ticker(ticker):
         # קח את הסגירה של יום המסחר הקודם מתוך הנרות
         closes = result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
         closes = [c for c in closes if c is not None]
-        prev = closes[-1] if closes else meta.get("regularMarketPreviousClose", 0)
+        prev = closes[-2] if len(closes) >= 2 else (closes[-1] if closes else meta.get("regularMarketPreviousClose", 0))
         change = ((price - prev) / prev * 100) if prev else 0
         volume = meta.get("regularMarketVolume", 0)
         avg_vol= meta.get("averageDailyVolume10Day", 1)
@@ -763,7 +763,7 @@ def get_vix():
         # קח סגירה של יום המסחר הקודם מהנרות
         closes = data.get("indicators", {}).get("quote", [{}])[0].get("close", [])
         closes = [c for c in closes if c is not None]
-        prev = closes[-1] if closes else meta.get("regularMarketPreviousClose", 0)
+        prev = closes[-2] if len(closes) >= 2 else (closes[-1] if closes else meta.get("regularMarketPreviousClose", 0))
         change = ((price - prev) / prev * 100) if prev else 0
         return round(price, 2), round(change, 2)
     except:
