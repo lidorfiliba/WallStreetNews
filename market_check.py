@@ -434,7 +434,35 @@ def check_news(state):
             if is_tesla:
                 emoji, tag = "🔴⭐", "טסלה"
             elif is_mag7:
-                emoji, tag = "🏢", "MAG7"
+                # זהה איזו חברה ספציפית מוזכרת
+                mag7_names = {
+                    "apple": ("🍎", "Apple"),
+                    "aapl": ("🍎", "Apple"),
+                    "microsoft": ("🪟", "Microsoft"),
+                    "msft": ("🪟", "Microsoft"),
+                    "google": ("🔍", "Google"),
+                    "googl": ("🔍", "Google"),
+                    "alphabet": ("🔍", "Google"),
+                    "amazon": ("📦", "Amazon"),
+                    "amzn": ("📦", "Amazon"),
+                    "meta": ("👤", "Meta"),
+                    "facebook": ("👤", "Meta"),
+                    "nvidia": ("🟢", "Nvidia"),
+                    "nvda": ("🟢", "Nvidia"),
+                    "netflix": ("🎬", "Netflix"),
+                    "nflx": ("🎬", "Netflix"),
+                }
+                found_companies = []
+                for kw, (em, name) in mag7_names.items():
+                    if kw in tl and name not in found_companies:
+                        found_companies.append((em, name))
+                if len(found_companies) == 1:
+                    emoji, tag = found_companies[0][0], found_companies[0][1]
+                elif len(found_companies) > 1:
+                    emoji = "🏢"
+                    tag = " + ".join(c[1] for c in found_companies[:3])
+                else:
+                    emoji, tag = "🏢", "MAG7"
             elif is_macro:
                 emoji, tag = "📊", "מאקרו"
             elif is_earnings:
