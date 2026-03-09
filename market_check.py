@@ -722,11 +722,14 @@ def get_fear_greed():
 def get_vix():
     """VIX מ-Yahoo Finance"""
     try:
-        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1d"
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=5d"
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
-        meta = r.json()["chart"]["result"][0]["meta"]
+        data = r.json()["chart"]["result"][0]
+        meta = data["meta"]
         price = meta.get("regularMarketPrice", 0)
-        prev  = meta.get("chartPreviousClose", 0)
+        prev  = meta.get("regularMarketPreviousClose", 0)
+        if not prev:
+            prev = meta.get("chartPreviousClose", 0)
         change = ((price - prev) / prev * 100) if prev else 0
         return round(price, 2), round(change, 2)
     except:
