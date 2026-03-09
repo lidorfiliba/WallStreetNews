@@ -414,7 +414,7 @@ def check_news(state):
                 continue
 
             pub_dt = parse_date(item["pub"])
-            if pub_dt and (now - pub_dt).total_seconds() > 7200:
+            if pub_dt and (now - pub_dt).total_seconds() > 1800:
                 continue
 
             tl = title.lower()
@@ -476,7 +476,7 @@ def check_twitter_nitter(state):
                     continue
 
                 pub_dt = parse_date(pub)
-                if pub_dt and (now - pub_dt).total_seconds() > 7200:
+                if pub_dt and (now - pub_dt).total_seconds() > 1800:
                     continue
 
                 tl = title.lower()
@@ -531,7 +531,9 @@ def check_opening_bell(state):
     israel_hour = now.hour + 2 if (now.month > 3 or (now.month == 3 and now.day >= 26)) else now.hour + 3
     israel_time = f"{israel_hour}:30"
 
-    lines = [f"🔔 <b>פתיחת מסחר — וול סטריט 🇺🇸 ({israel_time} 🇮🇱)</b>\n"]
+    fg_score, fg_label = get_fear_greed()
+    fg_line = f"\n😨 <b>Fear & Greed:</b> {fg_score} — {fg_label}" if fg_score else ""
+    lines = [f"🔔 <b>פתיחת מסחר — וול סטריט 🇺🇸 ({israel_time} 🇮🇱)</b>{fg_line}\n"]
 
     all_tickers = {}
     for ticker in ["SPY", "QQQ", "TSLA", "NVDA", "AAPL", "MSFT", "AMZN", "META", "GOOGL"]:
@@ -691,11 +693,80 @@ def check_weekly_summary(state):
     tg_send("\n".join(lines))
     mark(state, key)
 
+
+# ── Fear & Greed ──────────────────────────────────────────
+
+def get_fear_greed():
+    """Fear & Greed Index מ-CNN"""
+    try:
+        r = requests.get(
+            "https://production.dataviz.cnn.io/index/fearandgreed/graphdata",
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=8
+        )
+        data = r.json()
+        score = round(data["fear_and_greed"]["score"])
+        rating = data["fear_and_greed"]["rating"]
+        translations = {
+            "Extreme Fear": "פחד קיצוני 😱",
+            "Fear": "פחד 😰",
+            "Neutral": "ניטרלי 😐",
+            "Greed": "חמדנות 😏",
+            "Extreme Greed": "חמדנות קיצונית 🤑"
+        }
+        label = translations.get(rating, rating)
+        return score, label
+    except:
+        return None, None
+
+def get_vix():
+    """VIX מ-Yahoo Finance"""
+    try:
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX?interval=1d&range=1d"
+        r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
+        meta = r.json()["chart"]["result"][0]["meta"]
+        price = meta.get("regularMarketPrice", 0)
+        prev  = meta.get("chartPreviousClose", 0)
+        change = ((price - prev) / prev * 100) if prev else 0
+        return round(price, 2), round(change, 2)
+    except:
+        return None, None
+
+def check_vix_alert(state):
+    """התראה כשVIX עובר רמות מפתח"""
+    vix, change = get_vix()
+    if not vix:
+        return
+
+    level = None
+    if vix >= 30:
+        level = "🚨 VIX מעל 30 — פאניקה בשוק!"
+    elif vix >= 25:
+        level = "⚠️ VIX מעל 25 — חרדה גבוהה בשוק"
+    elif vix >= 20:
+        level = "⚡ VIX עבר 20 — תנודתיות עולה"
+
+    if not level:
+        return
+
+    key = f"vix:{int(vix // 5) * 5}:{datetime.now().strftime('%Y-%m-%d')}"
+    if sent(state, key):
+        return
+
+    arrow = "🟢" if change <= 0 else "🔴"
+    tg_send(
+        f"📊 <b>התראת VIX</b>\n"
+        f"{level}\n"
+        f"{arrow} VIX: {vix} ({change:+.2f}% היום)"
+    )
+    mark(state, key)
+
 # ── main ─────────────────────────────────────────────────
 
 def main():
     state = load_state()
 
+    check_vix_alert(state)
     check_sharp_moves(state)
     check_tesla_filings(state)
     check_insider(state)
