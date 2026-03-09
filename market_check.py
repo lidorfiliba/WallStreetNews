@@ -552,7 +552,7 @@ def check_opening_bell(state):
 
     # בדוק שאנחנו בתוך 5 דקות מהפתיחה (13:25-13:35 או 12:25-12:35 UTC)
     minutes_utc = now.hour * 60 + now.minute
-    is_open_window = (750 <= minutes_utc <= 755) or (805 <= minutes_utc <= 810)
+    is_open_window = (745 <= minutes_utc <= 765) or (800 <= minutes_utc <= 820)
     if not is_open_window:
         return
 
