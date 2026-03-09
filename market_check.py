@@ -545,24 +545,29 @@ def get_market_state():
         return "", 0
 
 def check_opening_bell(state):
-    """פתיחת מסחר — מזהה אוטומטית לפי Yahoo Finance"""
+    """פתיחת מסחר — מזהה אוטומטית לפי Yahoo Finance, בלי שעות קשיחות"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"open:{now.strftime('%Y-%m-%d')}"
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    market_state, _ = get_market_state()
+    market_state, open_ts = get_market_state()
     if market_state != "REGULAR":
         return
 
-    # בדוק שאנחנו בתוך 45 דקות מהפתיחה
-    minutes_utc = now.hour * 60 + now.minute
-    is_open_window = (725 <= minutes_utc <= 775) or (785 <= minutes_utc <= 845)
-    if not is_open_window:
-        return
+    # וודא שאנחנו בתוך 30 דקות מרגע הפתיחה האמיתי לפי Yahoo
+    if open_ts:
+        open_dt = datetime.utcfromtimestamp(open_ts)
+        minutes_since_open = (now - open_dt).total_seconds() / 60
+        if not (0 <= minutes_since_open <= 30):
+            return
 
-    israel_hour = now.hour + 2 if (now.month > 3 or (now.month == 3 and now.day >= 26)) else now.hour + 3
-    israel_time = f"{israel_hour}:30"
+    # שעון ישראל אוטומטי מה-UTC
+    from datetime import timezone as tz
+    import time as time_mod
+    israel_offset = 3 if time_mod.daylight else 2
+    israel_dt = now + timedelta(hours=israel_offset)
+    israel_time = israel_dt.strftime("%H:%M")
 
     fg_score, fg_label = get_fear_greed()
     fg_line = f"\n😨 <b>Fear & Greed:</b> {fg_score} — {fg_label}" if fg_score else ""
@@ -576,7 +581,6 @@ def check_opening_bell(state):
         star  = "⭐ " if ticker == "TSLA" else ""
         lines.append(f"{arrow} {star}{ticker}: ${price:.2f} ({change:+.2f}%)")
 
-    # מוביל עליות וירידות
     best  = max(all_tickers.items(), key=lambda x: x[1][1])
     worst = min(all_tickers.items(), key=lambda x: x[1][1])
     lines.append(f"\n🏆 מוביל יום: {best[0]} ({best[1][1]:+.2f}%)")
@@ -599,21 +603,22 @@ def get_commodity(symbol):
         return 0, 0
 
 def check_daily_summary(state):
-    """סיכום יומי — מזהה סגירה אוטומטית לפי Yahoo Finance"""
+    """סיכום יומי — מזהה סגירה אוטומטית לפי Yahoo Finance, בלי שעות קשיחות"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"summary:{now.strftime('%Y-%m-%d')}"
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    market_state, _ = get_market_state()
+    market_state, open_ts = get_market_state()
     if market_state not in ("POST", "CLOSED"):
         return
 
-    # בדוק שאנחנו בתוך 5 דקות מהסגירה (20:00 או 19:00 UTC)
-    minutes_utc = now.hour * 60 + now.minute
-    is_close_window = (1195 <= minutes_utc <= 1200) or (1135 <= minutes_utc <= 1140)
-    if not is_close_window:
-        return
+    # וודא שאנחנו בתוך 30 דקות מהסגירה (open_ts = זמן פתיחה, סגירה = פתיחה + 6.5 שעות)
+    if open_ts:
+        close_dt = datetime.utcfromtimestamp(open_ts) + timedelta(hours=6, minutes=30)
+        minutes_since_close = (now - close_dt).total_seconds() / 60
+        if not (0 <= minutes_since_close <= 30):
+            return
 
     today = now.strftime("%d.%m.%Y")
     lines = [f"📉📈 <b>יום המסחר הסתיים — {today}</b>\n"]
