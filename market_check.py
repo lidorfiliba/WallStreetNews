@@ -490,10 +490,9 @@ def check_news(state):
                 if len(found_companies) == 1:
                     emoji, tag = found_companies[0][0], found_companies[0][1]
                 elif len(found_companies) > 1:
-                    emoji = "🏢"
-                    tag = " + ".join(c[1] for c in found_companies[:3])
+                    emoji, tag = "📊", "תנועות שוק"
                 else:
-                    emoji, tag = "🏢", "MAG7"
+                    emoji, tag = "📊", "תנועות שוק"
             elif is_macro:
                 emoji, tag = "📊", "מאקרו"
             elif is_earnings:
