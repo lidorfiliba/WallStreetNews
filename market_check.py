@@ -73,12 +73,6 @@ BIG_COMPANIES = [
     "rivian", "lucid", "arm holdings", "arm",
 ]
 
-COMMODITIES_KEYWORDS = [
-    "oil", "crude", "wti", "brent", "opec", "barrel", "petroleum", "gasoline",
-    "gold", "silver", "xau", "xag", "bullion", "precious metals",
-    "natural gas", "copper", "commodities",
-]
-
 RSS_FEEDS = [
     # CNBC — תקציר אמיתי בתוך ה-RSS, קישורים אמיתיים
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
@@ -95,11 +89,6 @@ RSS_FEEDS = [
     "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=unusual+options+insider+buying&hl=en&gl=US&ceid=US:en",
-    # סחורות
-    "https://news.google.com/rss/search?q=oil+crude+price+barrel&hl=en&gl=US&ceid=US:en",
-    "https://news.google.com/rss/search?q=gold+silver+price+commodities&hl=en&gl=US&ceid=US:en",
-    # MAG7
-    "https://news.google.com/rss/search?q=nvidia+apple+microsoft+meta+amazon+google+stock&hl=en&gl=US&ceid=US:en",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
@@ -251,7 +240,9 @@ def title_fingerprint(title):
             "it","its","be","has","have","had","will","says","say","amid"}
     words = re.findall(r'\b[a-z]+\b', title.lower())
     key_words = [w for w in words if w not in stop and len(w) > 2]
-    return " ".join(sorted(key_words[:6]))  # 6 מילות מפתח ממוינות"fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com"]
+    return " ".join(sorted(key_words[:6]))  # 6 מילות מפתח ממוינות
+
+BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com"]
 
 def summarize_article(title, link, rss_desc=""):
     """מסכם כתבה — קודם מנסה לשלוף, אחרת משתמש ב-description מה-RSS"""
@@ -449,14 +440,13 @@ def check_news(state):
                 continue
 
             tl = title.lower()
-            is_tesla       = any(k in tl for k in TESLA_KEYWORDS)
-            is_mag7        = any(k in tl for k in MAG7_KEYWORDS)
-            is_macro       = any(k.lower() in tl for k in MACRO_KEYWORDS)
-            is_earnings    = any(k in tl for k in EARNINGS_KEYWORDS) and any(c in tl for c in BIG_COMPANIES)
-            is_move        = any(k in tl for k in MARKET_MOVE_KEYWORDS)
-            is_commodities = any(k in tl for k in COMMODITIES_KEYWORDS)
+            is_tesla    = any(k in tl for k in TESLA_KEYWORDS)
+            is_mag7     = any(k in tl for k in MAG7_KEYWORDS)
+            is_macro    = any(k.lower() in tl for k in MACRO_KEYWORDS)
+            is_earnings = any(k in tl for k in EARNINGS_KEYWORDS) and any(c in tl for c in BIG_COMPANIES)
+            is_move     = any(k in tl for k in MARKET_MOVE_KEYWORDS)
 
-            if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move, is_commodities]):
+            if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move]):
                 continue
 
             # סנן מקורות לא אמינים לסיכום
@@ -499,15 +489,6 @@ def check_news(state):
                 emoji, tag = "📊", "מאקרו"
             elif is_earnings:
                 emoji, tag = "💰", "דוח רבעוני"
-            elif is_commodities:
-                if any(k in tl for k in ["oil","crude","wti","brent","opec","barrel","gasoline"]):
-                    emoji, tag = "🛢️", "נפט"
-                elif any(k in tl for k in ["gold","xau","bullion"]):
-                    emoji, tag = "🥇", "זהב"
-                elif any(k in tl for k in ["silver","xag"]):
-                    emoji, tag = "🥈", "כסף"
-                else:
-                    emoji, tag = "🌾", "סחורות"
             else:
                 emoji, tag = "⚡", "תנועת שוק"
 
