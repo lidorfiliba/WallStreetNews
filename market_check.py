@@ -78,9 +78,6 @@ RSS_FEEDS = [
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=20910258",
     "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15839135",  # CNBC Markets
-    # Reuters — מקור אמין עם טקסט מלא
-    "https://feeds.reuters.com/reuters/businessNews",
-    "https://feeds.reuters.com/reuters/technologyNews",
     # Yahoo Finance — כיסוי רחב, בלי סיכום אם חסום
     "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US",
     "https://feeds.finance.yahoo.com/rss/2.0/headline?s=SPY,QQQ,NVDA,AAPL&region=US&lang=en-US",
@@ -442,7 +439,7 @@ def check_news(state):
                 continue
 
             pub_dt = parse_date(item["pub"])
-            if pub_dt and (now - pub_dt).total_seconds() > 1800:
+            if pub_dt and (now - pub_dt).total_seconds() > 10800:
                 continue
 
             tl = title.lower()
@@ -534,7 +531,7 @@ def check_twitter_nitter(state):
                     continue
 
                 pub_dt = parse_date(pub)
-                if pub_dt and (now - pub_dt).total_seconds() > 1800:
+                if pub_dt and (now - pub_dt).total_seconds() > 10800:
                     continue
 
                 tl = title.lower()
