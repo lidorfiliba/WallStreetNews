@@ -552,6 +552,8 @@ def check_twitter_nitter(state):
                     msg = f"📰 <b>{label}</b>\n📌 <b>{title}</b>"
                     if source:
                         msg += f"\n📰 {source}\n🔗 {link}"
+                if not summary and "news.google.com" in link:
+                    continue
                 tg_send(msg)
                 mark(state, key)
         except Exception as e:
