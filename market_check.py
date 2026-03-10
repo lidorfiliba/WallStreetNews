@@ -578,7 +578,7 @@ def check_opening_bell(state):
     if now.weekday() >= 5 or sent(state, key):
         return
 
-        return
+    _, open_ts, close_ts = get_market_state()
 
     # בדוק שאנחנו בתוך 45 דקות מהפתיחה (13:30 UTC = 810 או 14:30 UTC = 870)
     minutes_utc = now.hour * 60 + now.minute
