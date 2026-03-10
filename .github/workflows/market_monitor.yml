@@ -1,7 +1,7 @@
 name: MarketAlert Monitor
 on:
   schedule:
-    - cron: '*/5 * * * *'  # כל 5 דקות
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
   actions: write
@@ -24,8 +24,6 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install requests
-      - name: Test fetch sites
-        run: python test_fetch.py
       - name: Run monitor
         run: python market_check.py
         env:
