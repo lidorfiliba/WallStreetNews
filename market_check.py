@@ -630,6 +630,15 @@ def check_opening_bell(state):
             arrow = "🟢" if change >= 0 else "🔴"
             lines.append(f"{arrow} {label}: ${price:,.0f} ({change:+.2f}%)")
 
+
+    # מט"ח
+    lines.append("\n💱 <b>שערי חליפין</b>")
+    for symbol, label in [("USDILS=X","💵 דולר-שקל"),("EURILS=X","💶 יורו-שקל"),("EURUSD=X","💶 יורו-דולר")]:
+        price, change = get_commodity(symbol)
+        if price:
+            arrow = "🟢" if change >= 0 else "🔴"
+            lines.append(f"{arrow} {label}: ₪{price:.3f} ({change:+.2f}%)")
+
     tg_send("\n".join(lines))
     mark(state, key)
 
