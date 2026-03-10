@@ -861,8 +861,26 @@ def check_vix_alert(state):
 
 # ── main ─────────────────────────────────────────────────
 
+def cleanup_old_keys(state):
+    """מנקה keys ישנים מיום קודם"""
+    from datetime import datetime, timezone
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    yesterday_keys = ["open:", "summary:", "weekly:"]
+    state["sent"] = [
+        k for k in state.get("sent", [])
+        if not any(k.startswith(p) and today not in k for p in yesterday_keys)
+    ]
+    # נקה open/close ts אם הם מיום קודם
+    if state.get("today_open_ts", 0):
+        from datetime import datetime
+        ts_date = datetime.utcfromtimestamp(state["today_open_ts"]).strftime("%Y-%m-%d")
+        if ts_date != today:
+            state.pop("today_open_ts", None)
+            state.pop("today_close_ts", None)
+
 def main():
     state = load_state()
+    cleanup_old_keys(state)
 
     check_vix_alert(state)
     check_sharp_moves(state)
