@@ -242,6 +242,12 @@ def title_fingerprint(title):
     key_words = [w for w in words if w not in stop and len(w) > 2]
     return " ".join(sorted(key_words[:6]))  # 6 מילות מפתח ממוינות
 
+COMMODITIES_KEYWORDS = [
+    "oil", "crude", "wti", "brent", "opec", "barrel", "petroleum", "gasoline",
+    "gold", "silver", "xau", "xag", "bullion", "precious metals",
+    "natural gas", "copper", "commodities",
+]
+
 BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com"]
 
 def summarize_article(title, link, rss_desc=""):
