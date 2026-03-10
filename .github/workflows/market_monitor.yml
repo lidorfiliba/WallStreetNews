@@ -1,20 +1,16 @@
 name: MarketAlert Monitor
-
 on:
   schedule:
     - cron: '*/5 * * * *'  # כל 5 דקות
   workflow_dispatch:
-
 permissions:
   actions: write
   contents: read
-
 jobs:
   monitor:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Restore state cache
         uses: actions/cache@v3
         with:
@@ -22,21 +18,19 @@ jobs:
           key: market-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             market-state-
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: pip install requests
-
+      - name: Test fetch sites
+        run: python test_fetch.py
       - name: Run monitor
         run: python market_check.py
         env:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-
       - name: Save state cache
         if: always()
         uses: actions/cache/save@v3
