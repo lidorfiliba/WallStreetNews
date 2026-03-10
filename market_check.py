@@ -466,6 +466,9 @@ def check_news(state):
                 mag7_names = {
                     "apple": ("🍎", "Apple"),
                     "aapl": ("🍎", "Apple"),
+                    "iphone": ("🍎", "Apple"),
+                    "ipad": ("🍎", "Apple"),
+                    "tim cook": ("🍎", "Apple"),
                     "microsoft": ("🪟", "Microsoft"),
                     "msft": ("🪟", "Microsoft"),
                     "google": ("🔍", "Google"),
