@@ -56,7 +56,22 @@ MAG7_KEYWORDS = [
     "nvidia", "nvda", "jensen huang", "blackwell", "cuda", "h100", "h200",
 ]
 
-BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com"]
+BIG_COMPANIES = [
+    # MAG7
+    "apple", "aapl", "microsoft", "msft", "google", "googl", "alphabet",
+    "amazon", "amzn", "meta", "facebook", "nvidia", "nvda", "tesla", "tsla",
+    # ענקיות נוספות $450B+
+    "berkshire", "eli lilly", "lilly", "jpmorgan", "jp morgan", "visa",
+    "mastercard", "walmart", "exxon", "johnson", "unitedhealth", "broadcom",
+    "netflix", "nflx", "costco", "salesforce", "oracle", "amd", "intel",
+    "taiwan semiconductor", "tsmc", "samsung", "asml", "novo nordisk",
+    "lvmh", "hermes", "toyota", "samsung", "tencent", "alibaba",
+    # ביג בנקים
+    "goldman sachs", "morgan stanley", "bank of america", "wells fargo", "citigroup",
+    # מדוברות
+    "openai", "anthropic", "spacex", "palantir", "coinbase", "robinhood",
+    "rivian", "lucid", "arm holdings", "arm",
+]
 
 RSS_FEEDS = [
     # CNBC — תקציר אמיתי בתוך ה-RSS, קישורים אמיתיים
@@ -426,7 +441,7 @@ def check_news(state):
             is_tesla    = any(k in tl for k in TESLA_KEYWORDS)
             is_mag7     = any(k in tl for k in MAG7_KEYWORDS)
             is_macro    = any(k.lower() in tl for k in MACRO_KEYWORDS)
-            is_earnings = any(k in tl for k in EARNINGS_KEYWORDS)
+            is_earnings = any(k in tl for k in EARNINGS_KEYWORDS) and any(c in tl for c in BIG_COMPANIES)
             is_move     = any(k in tl for k in MARKET_MOVE_KEYWORDS)
 
             if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move]):
@@ -533,16 +548,18 @@ def check_twitter_nitter(state):
             print(f"Google News error ({label}): {e}")
 
 def get_market_state():
-    """שואל את Yahoo Finance אם השוק פתוח/סגור ומתי"""
+    """שואל את Yahoo Finance — מחזיר state, open_ts, close_ts"""
     try:
         url = "https://query1.finance.yahoo.com/v8/finance/chart/SPY?interval=1d&range=1d"
         r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
         meta = r.json()["chart"]["result"][0]["meta"]
-        state = meta.get("marketState", "")  # REGULAR, PRE, POST, CLOSED
+        market_state = meta.get("marketState", "")
         open_ts  = meta.get("regularMarketTime", 0)
-        return state, open_ts
+        # זמן סגירה אמיתי מ-Yahoo — עובד גם בימים קצרים
+        close_ts = meta.get("currentTradingPeriod", {}).get("regular", {}).get("end", 0)
+        return market_state, open_ts, close_ts
     except:
-        return "", 0
+        return "", 0, 0
 
 def check_opening_bell(state):
     """פתיחת מסחר — מזהה אוטומטית לפי Yahoo Finance"""
@@ -551,18 +568,25 @@ def check_opening_bell(state):
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    market_state, _ = get_market_state()
+    market_state, open_ts, close_ts = get_market_state()
     if market_state != "REGULAR":
         return
 
-    # בדוק שאנחנו בתוך 45 דקות מהפתיחה
+    # בדוק שאנחנו בתוך 45 דקות מהפתיחה (13:30 UTC = 810 או 14:30 UTC = 870)
     minutes_utc = now.hour * 60 + now.minute
-    is_open_window = (725 <= minutes_utc <= 775) or (785 <= minutes_utc <= 845)
+    is_open_window = (810 <= minutes_utc <= 855) or (870 <= minutes_utc <= 915)
     if not is_open_window:
         return
 
-    israel_hour = now.hour + 2 if (now.month > 3 or (now.month == 3 and now.day >= 26)) else now.hour + 3
-    israel_time = f"{israel_hour}:30"
+    # שמור זמן פתיחה וסגירה ב-state
+    state["today_open_ts"] = int(now.timestamp())
+    if close_ts:
+        state["today_close_ts"] = close_ts
+
+    # שעון ישראל אוטומטי
+    israel_offset = 2 if now.month >= 4 and now.month <= 10 else 3
+    israel_dt = now + timedelta(hours=israel_offset)
+    israel_time = israel_dt.strftime("%H:%M")
 
     fg_score, fg_label = get_fear_greed()
     fg_line = f"\n😨 <b>Fear & Greed:</b> {fg_score} — {fg_label}" if fg_score else ""
@@ -615,20 +639,25 @@ def get_commodity(symbol):
         return 0, 0
 
 def check_daily_summary(state):
-    """סיכום יומי — מזהה סגירה אוטומטית לפי Yahoo Finance"""
+    """סיכום יומי — מחשב סגירה מזמן הסגירה האמיתי של Yahoo (כולל ימים קצרים)"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     key = f"summary:{now.strftime('%Y-%m-%d')}"
     if now.weekday() >= 5 or sent(state, key):
         return
 
-    market_state, _ = get_market_state()
-    if market_state not in ("POST", "CLOSED"):
+    market_state, _, close_ts = get_market_state()
+    if market_state == "REGULAR":
         return
 
-    # בדוק שאנחנו בתוך 5 דקות מהסגירה (20:00 או 19:00 UTC)
-    minutes_utc = now.hour * 60 + now.minute
-    is_close_window = (1195 <= minutes_utc <= 1200) or (1135 <= minutes_utc <= 1140)
-    if not is_close_window:
+    # קח זמן סגירה — קודם מה-state (נשמר בפתיחה), אחרת מ-Yahoo ישירות
+    saved_close = state.get("today_close_ts", 0)
+    effective_close = saved_close if saved_close else close_ts
+    if not effective_close:
+        return
+
+    close_dt = datetime.utcfromtimestamp(effective_close)
+    minutes_since_close = (now - close_dt).total_seconds() / 60
+    if not (0 <= minutes_since_close <= 30):
         return
 
     today = now.strftime("%d.%m.%Y")
@@ -690,13 +719,10 @@ def check_daily_summary(state):
             arrow = "🟢" if change >= 0 else "🔴"
             lines.append(f"{arrow} {label}: ₪{price:.3f} ({change:+.2f}%)")
 
-    # קריפטו
-    lines.append("\n₿ <b>קריפטו</b>")
-    for symbol, label in [("BTC-USD","₿ ביטקוין"),("ETH-USD","Ξ אתריום")]:
-        price, change = get_commodity(symbol)
-        if price:
-            arrow = "🟢" if change >= 0 else "🔴"
-            lines.append(f"{arrow} {label}: ${price:,.0f} ({change:+.2f}%)")
+    if winners:
+        lines.append(f"\n🏆 <b>מובילי עליות:</b> {', '.join(winners[:3])}")
+    if losers:
+        lines.append(f"📉 <b>מובילי ירידות:</b> {', '.join(losers[:3])}")
 
     tg_send("\n".join(lines))
     mark(state, key)
