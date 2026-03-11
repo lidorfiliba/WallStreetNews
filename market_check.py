@@ -91,6 +91,8 @@ RSS_FEEDS = [
     # Google News — כיסוי רחב
     "https://news.google.com/rss/search?q=tesla+TSLA+elon+musk&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=federal+reserve+fed+inflation+CPI&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=CPI+consumer+price+index+february+2026&hl=en&gl=US&ceid=US:en",
+    "https://news.google.com/rss/search?q=inflation+data+report+today&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=unusual+options+insider+buying&hl=en&gl=US&ceid=US:en",
 ]
