@@ -35,6 +35,13 @@ EARNINGS_KEYWORDS = [
     "beats", "misses", "results", "profit", "loss", "outlook",
 ]
 
+ELON_NOISE = [
+    "mother", "girlfriend", "wife", "children", "kids", "family",
+    "house", "home", "living", "lifestyle", "personal",
+    "richest", "billionaire", "net worth", "fashion", "dating",
+    "grimes", "baby", "biography", "childhood",
+]
+
 TESLA_KEYWORDS = [
     "tesla", "tsla", "elon musk", "elon", "cybertruck",
     "model 3", "model y", "model s", "gigafactory",
