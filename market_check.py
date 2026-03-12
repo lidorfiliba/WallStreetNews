@@ -254,7 +254,7 @@ COMMODITIES_KEYWORDS = [
     "natural gas", "copper", "commodities",
 ]
 
-BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com", "247wallst.com", "benzinga.com", "investorplace.com", "thestreet.com", "bloomberg.com", "businessinsider.com"]
+BLOCKED_DOMAINS = ["fool.com", "seekingalpha.com", "wsj.com", "barrons.com", "ft.com", "finance.yahoo.com", "uk.finance.yahoo.com", "marketwatch.com", "247wallst.com", "benzinga.com", "investorplace.com", "thestreet.com", "bloomberg.com", "businessinsider.com", "tradingview.com", "tipranks.com"]
 
 def summarize_article(title, link, rss_desc=""):
     """מסכם כתבה — קודם מנסה לשלוף, אחרת משתמש ב-description מה-RSS"""
