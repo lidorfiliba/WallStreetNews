@@ -7,7 +7,9 @@ TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_CHAT_ID = "-1003549323911"
 
 def gen_code():
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    p1 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    p2 = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    return f'{p1}-{p2}'
 
 def update_gist(code, expires):
     content = json.dumps({"code": code, "expires": expires}, ensure_ascii=False)
