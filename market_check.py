@@ -466,6 +466,9 @@ def check_news(state):
                 continue
 
             if is_tesla:
+                if getattr(check_news, "_tesla_count", 0) >= 2:
+                    continue
+                check_news._tesla_count = getattr(check_news, "_tesla_count", 0) + 1
                 emoji, tag = "🔴⭐", "טסלה"
             elif is_mag7:
                 # זהה איזו חברה ספציפית מוזכרת
