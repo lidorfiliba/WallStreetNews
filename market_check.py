@@ -892,23 +892,3 @@ def cleanup_old_keys(state):
             state.pop("today_open_ts", None)
             state.pop("today_close_ts", None)
 
-def main():
-    state = load_state()
-    cleanup_old_keys(state)
-
-    check_vix_alert(state)
-    check_sharp_moves(state)
-    check_tesla_filings(state)
-    check_insider(state)
-    check_news(state)
-    check_twitter_nitter(state)
-    check_opening_bell(state)
-    check_daily_summary(state)
-    check_weekly_summary(state)
-
-    save_state(state)
-    print(f"Done. Keys: {len(state['sent'])}")
-
-if __name__ == "__main__":
-    main()
-# updated
