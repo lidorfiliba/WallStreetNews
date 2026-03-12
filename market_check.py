@@ -641,7 +641,17 @@ def check_opening_bell(state):
         state["today_close_ts"] = close_ts
 
     # שעון ישראל אוטומטי
-    israel_offset = 2 if now.month >= 3 and now.month <= 10 else 3
+    # שעון קיץ ישראל: אחרון של מרץ עד אחרון של אוקטובר
+    from datetime import date
+    def last_sunday(year, month):
+        import calendar
+        last_day = calendar.monthrange(year, month)[1]
+        d = date(year, month, last_day)
+        return d - timedelta(days=d.weekday() + 1) if d.weekday() != 6 else d
+    dst_start = last_sunday(now.year, 3)
+    dst_end = last_sunday(now.year, 10)
+    now_date = now.date() if hasattr(now, 'date') else date(now.year, now.month, now.day)
+    israel_offset = 3 if dst_start <= now_date <= dst_end else 2
     israel_dt = now + timedelta(hours=israel_offset)
     israel_time = israel_dt.strftime("%H:%M")
 
