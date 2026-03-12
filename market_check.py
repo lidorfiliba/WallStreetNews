@@ -892,3 +892,49 @@ def cleanup_old_keys(state):
             state.pop("today_open_ts", None)
             state.pop("today_close_ts", None)
 
+
+def check_weekly_calendar(state):
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if now.weekday() != 6 or not (420 <= now.hour * 60 + now.minute <= 480):
+        return
+    key = "weekly_calendar:" + now.strftime("%Y-%m-%d")
+    if sent(state, key):
+        return
+    FMP_KEY = os.environ.get("FMP_API_KEY", "")
+    if not FMP_KEY:
+        return
+    today = now.strftime("%Y-%m-%d")
+    friday = (now + timedelta(days=5)).strftime("%Y-%m-%d")
+    try:
+        url = "https://financialmodelingprep.com/api/v3/economic_calendar?from=" + today + "&to=" + friday + "&apikey=" + FMP_KEY
+        data = json.loads(fetch_url(url, timeout=10) or "[]")
+    except:
+        return
+    HIGH_EVENTS = ["cpi","pce","nonfarm","unemployment","gdp","fomc","fed","interest rate","retail sales","ppi","ism","jolts","payroll"]
+    events = []
+    for e in data:
+        name = e.get("event","").lower()
+        impact = e.get("impact","").lower()
+        if e.get("country","") != "US":
+            continue
+        if impact not in ["high","medium"] and not any(k in name for k in HIGH_EVENTS):
+            continue
+        date_str = e.get("date","")[:10]
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            days = ["שני","שלישי","רביעי","חמישי","שישי","שבת","ראשון"]
+            date_fmt = days[dt.weekday()] + " " + dt.strftime("%d.%m")
+        except:
+            date_fmt = date_str
+        emoji = "🔴" if impact == "high" else "🟡"
+        events.append((date_str, emoji + " " + date_fmt + " - " + e.get("event","")))
+    if not events:
+        return
+    events.sort(key=lambda x: x[0])
+    week_end = (now + timedelta(days=5)).strftime("%d.%m")
+    week_start = now.strftime("%d.%m")
+    msg = "📅 <b>לוח אירועים שבועי - " + week_start + " עד " + week_end + "</b>\n\n"
+    msg += "\n".join(line for _, line in events)
+    msg += "\n\n🔴 השפעה גבוהה | 🟡 השפעה בינונית"
+    tg_send(msg)
+    mark(state, key)
