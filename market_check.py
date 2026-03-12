@@ -7,6 +7,42 @@ from datetime import datetime, timedelta, timezone
 import urllib.request
 import xml.etree.ElementTree as ET
 
+
+# לוח שנה רשמי של NYSE 2026
+NYSE_HOLIDAYS = {
+    "2026-01-01",  # New Year's Day
+    "2026-01-19",  # MLK Day
+    "2026-02-16",  # Presidents Day
+    "2026-04-03",  # Good Friday
+    "2026-05-25",  # Memorial Day
+    "2026-06-19",  # Juneteenth
+    "2026-07-03",  # Independence Day
+    "2026-09-07",  # Labor Day
+    "2026-11-26",  # Thanksgiving
+    "2026-12-25",  # Christmas
+}
+NYSE_SHORT_DAYS = {
+    "2026-11-27": 18,  # Day after Thanksgiving — סגירה 13:00 ET = 18:00 UTC
+    "2026-12-24": 18,  # Christmas Eve — סגירה 13:00 ET = 18:00 UTC
+}
+
+def is_trading_day(date_str=None):
+    from datetime import datetime, timezone
+    if date_str is None:
+        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    dt = datetime.strptime(date_str, "%Y-%m-%d")
+    if dt.weekday() >= 5:
+        return False
+    if date_str in NYSE_HOLIDAYS:
+        return False
+    return True
+
+def get_close_hour_utc(date_str=None):
+    from datetime import datetime, timezone
+    if date_str is None:
+        date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return NYSE_SHORT_DAYS.get(date_str, 20)
+
 TG_BOT_TOKEN = os.environ.get("TG_BOT_TOKEN", "")
 TG_CHAT_ID   = -1003549323911
 STATE_FILE   = "market_state.json"
