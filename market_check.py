@@ -40,6 +40,7 @@ ELON_NOISE = [
     "house", "home", "living", "lifestyle", "personal",
     "richest", "billionaire", "net worth", "fashion", "dating",
     "grimes", "baby", "biography", "childhood",
+    "iran", "khamenei", "supreme leader", "political", "president", "senator", "congress",
 ]
 
 TESLA_KEYWORDS = [
