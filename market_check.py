@@ -604,7 +604,7 @@ def check_opening_bell(state):
         state["today_close_ts"] = close_ts
 
     # שעון ישראל אוטומטי
-    israel_offset = 2 if now.month >= 4 and now.month <= 10 else 3
+    israel_offset = 2 if now.month >= 3 and now.month <= 10 else 3
     israel_dt = now + timedelta(hours=israel_offset)
     israel_time = israel_dt.strftime("%H:%M")
 
