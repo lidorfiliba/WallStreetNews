@@ -510,9 +510,8 @@ def check_news(state):
                 continue
             print(f"PASS keyword: {title[:60]}")
 
-            # סנן מקורות לא אמינים לסיכום
-            if any(d in link for d in BLOCKED_DOMAINS):
-                continue
+            # מקורות חסומים — שלח כותרת בלי לינק
+            blocked_source = any(d in link for d in BLOCKED_DOMAINS)
 
             if is_tesla:
                 if getattr(check_news, "_tesla_count", 0) >= 2:
@@ -571,6 +570,8 @@ def check_news(state):
                 else:
                     print(f"SKIP blocked-source no-summary: {title[:60]}")
                     continue
+            elif blocked_source:
+                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
             else:
                 summary = summarize_article(title, link, item.get("desc",""))
                 if summary:
