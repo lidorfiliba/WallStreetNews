@@ -556,24 +556,32 @@ def check_news(state):
             else:
                 emoji, tag = "⚡", "תנועת שוק"
 
+            # מקורות חסומים או Google News — דלג אם אין תוכן אמיתי
+            if blocked_source:
+                continue
+
             source = link.split("/")[2].replace("www.","") if "http" in link else ""
-            # אם הקישור עדיין של Google News — אל תציג אותו
-            if "news.google.com" in link:
-                summary = summarize_article(title, link, item.get("desc",""))
-                if summary:
+            summary = summarize_article(title, link, item.get("desc",""))
+
+            if summary:
+                # יש סיכום — שלח תמיד
+                if "news.google.com" in link:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}")
-                elif not any(src.lower() in title.lower() for src in ["Motley Fool","Seeking Alpha","Benzinga","MarketWatch","Barron","InvestorPlace","TheStreet"]):
-                    tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
                 else:
-                    continue
-            elif blocked_source:
-                tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
-            else:
-                summary = summarize_article(title, link, item.get("desc",""))
-                if summary:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}\n\n📰 {source}\n🔗 {link}")
-                else:
+            else:
+                # אין סיכום — מקסימום 2 כאלה לריצה
+                no_summary_count = getattr(check_news, "_no_summary_count", 0)
+                if no_summary_count >= 2:
+                    mark(state, key)
+                    continue
+                check_news._no_summary_count = no_summary_count + 1
+                if "news.google.com" not in link:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n📰 {source}\n🔗 {link}")
+                else:
+                    # Google News בלי סיכום — דלג
+                    mark(state, key)
+                    continue
             mark(state, key)
 
 
