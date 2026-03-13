@@ -372,6 +372,7 @@ def summarize_article(title, link, rss_desc=""):
 def check_sharp_moves(state):
     """תנועות חדות — שולח רק כשיש שינוי חריג חדש"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
+    print(f"sharp_moves check: {now.strftime('%H:%M')} UTC, weekday={now.weekday()}")
     if not (now.weekday() < 5 and (now.hour > 13 or (now.hour == 13 and now.minute >= 30)) and now.hour < 20):
         return
 
