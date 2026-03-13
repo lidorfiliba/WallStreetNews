@@ -132,6 +132,9 @@ RSS_FEEDS = [
     "https://news.google.com/rss/search?q=inflation+data+report+today&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=earnings+beat+miss+quarterly+results&hl=en&gl=US&ceid=US:en",
     "https://news.google.com/rss/search?q=unusual+options+insider+buying&hl=en&gl=US&ceid=US:en",
+    # NPR & BBC — נגישים מ-Codespace
+    "https://feeds.npr.org/1006/rss.xml",
+    "https://feeds.bbci.co.uk/news/business/rss.xml",
 ]
 
 SEC_TSLA = "https://data.sec.gov/submissions/CIK0001318605.json"
