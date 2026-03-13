@@ -328,6 +328,7 @@ def summarize_article(title, link, rss_desc=""):
         "The Wall Street Journal", "Bloomberg", "Business Insider", "The Motley Fool",
         "InvestorPlace", "TheStreet", "TipRanks", "TradingView"]
     if any(src.lower() in title.lower() for src in BLOCKED_SOURCES):
+        print(f"BLOCKED source in title: {title[:60]}")
         return None
     if not text and len(rss_desc) > 80:
         if not any(d in link for d in BLOCKED_DOMAINS) and not any(d in rss_desc for d in BLOCKED_DOMAINS):
