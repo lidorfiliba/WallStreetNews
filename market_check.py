@@ -379,7 +379,6 @@ def summarize_article(title, link, rss_desc=""):
 def check_sharp_moves(state):
     """תנועות חדות — שולח רק כשיש שינוי חריג חדש"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    print(f"sharp_moves check: {now.strftime('%H:%M')} UTC, weekday={now.weekday()}")
     if not (now.weekday() < 5 and (now.hour > 13 or (now.hour == 13 and now.minute >= 30)) and now.hour < 20):
         return
 
@@ -482,7 +481,6 @@ def check_insider(state):
         print(f"Insider error: {e}")
 
 def check_news(state):
-    print("=== check_news started ===")
     """חדשות שוק, מאקרו, טסלה ודוחות"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -506,9 +504,7 @@ def check_news(state):
             is_move     = any(k in tl for k in MARKET_MOVE_KEYWORDS)
 
             if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move]):
-                print(f"SKIP no-keyword: {title[:60]}")
                 continue
-            print(f"PASS keyword: {title[:60]}")
 
             # מקורות חסומים — שלח כותרת בלי לינק
             blocked_source = any(d in link for d in BLOCKED_DOMAINS)
@@ -558,17 +554,14 @@ def check_news(state):
                 emoji, tag = "⚡", "תנועת שוק"
 
             source = link.split("/")[2].replace("www.","") if "http" in link else ""
-            print(f"LINK: {link[:80]}")
             # אם הקישור עדיין של Google News — אל תציג אותו
             if "news.google.com" in link:
                 summary = summarize_article(title, link, item.get("desc",""))
-                print(f"SENDING: {title[:50]}, summary={bool(summary)}")
                 if summary:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}")
                 elif not any(src.lower() in title.lower() for src in ["Motley Fool","Seeking Alpha","Benzinga","MarketWatch","Barron","InvestorPlace","TheStreet"]):
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
                 else:
-                    print(f"SKIP blocked-source no-summary: {title[:60]}")
                     continue
             elif blocked_source:
                 tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
