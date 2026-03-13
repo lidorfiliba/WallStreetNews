@@ -324,7 +324,7 @@ def summarize_article(title, link, rss_desc=""):
 
     # אם לא הצלחנו — השתמש ב-description מה-RSS
     if not text and len(rss_desc) > 80:
-        if not any(d in link for d in BLOCKED_DOMAINS):
+        if not any(d in link for d in BLOCKED_DOMAINS) and not any(d in rss_desc for d in BLOCKED_DOMAINS):
             text = rss_desc
 
     if not text:
