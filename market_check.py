@@ -744,7 +744,7 @@ def check_daily_summary(state):
     if not effective_close:
         return
 
-    close_dt = datetime.utcfromtimestamp(effective_close)
+    close_dt = datetime.fromtimestamp(effective_close, datetime.UTC).replace(tzinfo=None)
     minutes_since_close = (now - close_dt).total_seconds() / 60
     if not (0 <= minutes_since_close <= 30):
         return
@@ -946,7 +946,7 @@ def cleanup_old_keys(state):
     # נקה open/close ts אם הם מיום קודם
     if state.get("today_open_ts", 0):
         from datetime import datetime
-        ts_date = datetime.utcfromtimestamp(state["today_open_ts"]).strftime("%Y-%m-%d")
+        ts_date = datetime.fromtimestamp(state["today_open_ts"], datetime.UTC).strftime("%Y-%m-%d")
         if ts_date != today:
             state.pop("today_open_ts", None)
             state.pop("today_close_ts", None)
