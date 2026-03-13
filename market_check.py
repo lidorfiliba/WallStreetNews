@@ -985,3 +985,15 @@ def check_weekly_calendar(state):
     msg += "\n\n🔴 השפעה גבוהה | 🟡 השפעה בינונית"
     tg_send(msg)
     mark(state, key)
+
+# ===== MAIN =====
+if __name__ == "__main__":
+    state = load_state()
+    cleanup_old_keys(state)
+    check_opening_bell(state)
+    check_news(state)
+    check_sharp_moves(state)
+    check_daily_summary(state)
+    check_weekly_summary(state)
+    check_weekly_calendar(state)
+    save_state(state)
