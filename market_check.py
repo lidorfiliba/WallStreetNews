@@ -559,6 +559,7 @@ def check_news(state):
                 emoji, tag = "⚡", "תנועת שוק"
 
             source = link.split("/")[2].replace("www.","") if "http" in link else ""
+            print(f"LINK: {link[:80]}")
             # אם הקישור עדיין של Google News — אל תציג אותו
             if "news.google.com" in link:
                 summary = summarize_article(title, link, item.get("desc",""))
