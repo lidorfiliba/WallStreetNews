@@ -562,6 +562,7 @@ def check_news(state):
             # אם הקישור עדיין של Google News — אל תציג אותו
             if "news.google.com" in link:
                 summary = summarize_article(title, link, item.get("desc",""))
+                print(f"SENDING: {title[:50]}, summary={bool(summary)}")
                 if summary:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}")
                 else:
