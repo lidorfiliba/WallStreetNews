@@ -565,8 +565,11 @@ def check_news(state):
                 print(f"SENDING: {title[:50]}, summary={bool(summary)}")
                 if summary:
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>\n\n{summary}")
-                else:
+                elif not any(src.lower() in title.lower() for src in ["Motley Fool","Seeking Alpha","Benzinga","MarketWatch","Barron","InvestorPlace","TheStreet"]):
                     tg_send(f"{emoji} <b>{tag}</b>\n📌 <b>{title}</b>")
+                else:
+                    print(f"SKIP blocked-source no-summary: {title[:60]}")
+                    continue
             else:
                 summary = summarize_article(title, link, item.get("desc",""))
                 if summary:
