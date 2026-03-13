@@ -505,7 +505,9 @@ def check_news(state):
             is_move     = any(k in tl for k in MARKET_MOVE_KEYWORDS)
 
             if not any([is_tesla, is_mag7, is_macro, is_earnings, is_move]):
+                print(f"SKIP no-keyword: {title[:60]}")
                 continue
+            print(f"PASS keyword: {title[:60]}")
 
             # סנן מקורות לא אמינים לסיכום
             if any(d in link for d in BLOCKED_DOMAINS):
