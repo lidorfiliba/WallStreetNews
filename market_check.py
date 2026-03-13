@@ -481,6 +481,7 @@ def check_insider(state):
         print(f"Insider error: {e}")
 
 def check_news(state):
+    print("=== check_news started ===")
     """חדשות שוק, מאקרו, טסלה ודוחות"""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
