@@ -323,6 +323,12 @@ def summarize_article(title, link, rss_desc=""):
             pass
 
     # אם לא הצלחנו — השתמש ב-description מה-RSS
+    # בדוק אם הכותרת מכילה מקור חסום (Google News מוסיף "- Source" בסוף)
+    BLOCKED_SOURCES = ["Benzinga", "Seeking Alpha", "MarketWatch", "Barron's", "WSJ",
+        "The Wall Street Journal", "Bloomberg", "Business Insider", "The Motley Fool",
+        "InvestorPlace", "TheStreet", "TipRanks", "TradingView"]
+    if any(src.lower() in title.lower() for src in BLOCKED_SOURCES):
+        return None
     if not text and len(rss_desc) > 80:
         if not any(d in link for d in BLOCKED_DOMAINS) and not any(d in rss_desc for d in BLOCKED_DOMAINS):
             text = rss_desc
